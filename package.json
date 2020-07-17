@@ -1,0 +1,51 @@
+{
+  "name": "scoped-custom-element-registry-polyfill",
+  "version": "0.0.0",
+  "description": "Scoped CustomElement Registry Polyfill",
+  "author": "Manuel Martin",
+  "license": "MIT",
+  "main": "index.js",
+  "module": "index.js",
+  "scripts": {
+    "format": "npm run format:eslint && npm run format:prettier",
+    "format:eslint": "eslint --ext .js,.html . --fix --ignore-path .gitignore",
+    "format:prettier": "prettier \"**/*.js\" --write --ignore-path .gitignore",
+    "lint": "run-p lint:*",
+    "lint:eslint": "eslint --ext .js,.html . --ignore-path .gitignore",
+    "lint:prettier": "prettier \"**/*.js\" --check --ignore-path .gitignore",
+    "lint:eclint": "git ls-files | xargs eclint check",
+    "lint:markdownlint": "git ls-files '*.md' | xargs markdownlint --ignore '**/CHANGELOG.md' --ignore '__snapshots__/**/*.md'",
+    "test": "wtr test/**/*.test.js --node-resolve --coverage",
+    "test:watch": "wtr test/**/*.test.js --node-resolve --watch"
+  },
+  "devDependencies": {
+    "@commitlint/config-conventional": "^9",
+    "@open-wc/eslint-config": "^2",
+    "@open-wc/testing": "^2",
+    "@web/test-runner": "^0.6.24",
+    "eclint": "^2",
+    "eslint": "^6",
+    "eslint-config-prettier": "^6",
+    "husky": "^1",
+    "lint-staged": "^8",
+    "markdownlint-cli": "^0.23.2",
+    "npm-run-all": "^4",
+    "prettier": "^2"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "arrowParens": "avoid"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  }
+}
