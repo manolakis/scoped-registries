@@ -19,6 +19,20 @@ describe('polyfillCustomElementRegistry', () => {
         expect(customElements.__tagsCache.has('sw-ahch-to')).to.be.false;
       });
     });
+
+    describe('get', () => {
+      it('should return the constructor defined for a tag name', () => {
+        class Anoat extends HTMLElement {}
+
+        customElements.define('sw-anoat', Anoat);
+
+        expect(customElements.get('sw-anoat')).to.be.equal(Anoat);
+      });
+
+      it('should return undefined if there is no constructor defined for a tag name', async () => {
+        expect(customElements.get('sw-unknown')).to.be.undefined;
+      });
+    });
   });
 
   describe('Scoped Custom Element Registry', () => {
@@ -53,6 +67,45 @@ describe('polyfillCustomElementRegistry', () => {
         registry.define('sw-alderaan', class extends HTMLElement {});
 
         expect(registry.__tagsCache.has('sw-alderaan')).to.be.true;
+      });
+    });
+
+    describe('get', () => {
+      it('should return the constructor defined for a tag name', () => {
+        class Atollon extends HTMLElement {}
+        const registry = new CustomElementRegistry();
+
+        registry.define('sw-atollon', Atollon);
+
+        expect(new (registry.get('sw-atollon'))()).to.be.instanceof(Atollon);
+      });
+
+      it('should return undefined if there is no constructor defined for a tag name', async () => {
+        const registry = new CustomElementRegistry();
+
+        expect(registry.get('sw-unknown')).to.be.undefined;
+      });
+
+      it('should return the closest constructor defined for a tag name in the chain of registries', async () => {
+        class Bespin extends HTMLElement {}
+        class BaseStarkiller extends HTMLElement {}
+        const registry = new CustomElementRegistry(customElements);
+        const registry2 = new CustomElementRegistry(registry);
+
+        customElements.define('sw-bespin', Bespin);
+        registry.define('sw-base-starkiller', BaseStarkiller);
+
+        expect(new (registry2.get('sw-bespin'))()).to.be.instanceof(Bespin);
+        expect(new (registry2.get('sw-base-starkiller'))()).to.be.instanceof(
+          BaseStarkiller
+        );
+      });
+
+      it('should return undefined if there is no constructor defined for a tag name in the chain of registries', async () => {
+        const registry = new CustomElementRegistry(customElements);
+        const registry2 = new CustomElementRegistry(registry);
+
+        expect(registry2.get('sw-unknown')).to.be.undefined;
       });
     });
   });

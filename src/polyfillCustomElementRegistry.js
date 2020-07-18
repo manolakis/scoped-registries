@@ -2,11 +2,10 @@
 import { createUniqueTag } from './createUniqueTag.js';
 import { OriginalCustomElementRegistry } from './constants.js';
 
-export const polyfillCustomElementRegistry = registry => {
-  const that = registry;
-
+export const polyfillCustomElementRegistry = that => {
   // maintains the original methods available
   that.__define = that.define;
+  that.__get = that.get;
 
   /**
    * Tags cache
@@ -50,14 +49,29 @@ export const polyfillCustomElementRegistry = registry => {
           options
         );
 
+  /**
+   * Returns the closest constructor defined for a tag name in a chain of registries, or undefined if the custom
+   * element is not defined.
+   * @param {string} name
+   * @returns {CustomElementConstructor|undefined}
+   */
+  that.get = name => {
+    let registry = that;
+
+    while (registry) {
+      if (registry.__isRoot()) {
+        return registry.__get(name);
+      }
+
+      if (registry.__tagsCache.has(name)) {
+        return registry.__get(registry.__tagsCache.get(name));
+      }
+
+      registry = registry.parent;
+    }
+
+    return undefined;
+  };
+
   return that;
 };
-
-/**
- * Applies the polyfill to the CustomElementRegistry
- */
-// export const polyfillCustomElementRegistry = () => {
-//   enhanceRegistry(customElements);
-//
-//   CustomElementRegistry = ScopedCustomElementRegistry;
-// };
