@@ -56,15 +56,32 @@ export const polyfillCustomElementRegistry = that => {
    * @returns {CustomElementConstructor|undefined}
    */
   that.get = name => {
+    const registry = that.getRegistry(name);
+
+    if (registry) {
+      return registry.__isRoot()
+        ? registry.__get(name)
+        : registry.__get(registry.__tagsCache.get(name));
+    }
+
+    return undefined;
+  };
+
+  /**
+   * Returns the closest registry in which a tag name is defined or undefined if the tag is not defined.
+   * @param name
+   * @returns {CustomElementRegistry|undefined}
+   */
+  that.getRegistry = name => {
     let registry = that;
 
     while (registry) {
-      if (registry.__isRoot()) {
-        return registry.__get(name);
+      if (registry.__isRoot() && registry.__get(name)) {
+        return registry;
       }
 
       if (registry.__tagsCache.has(name)) {
-        return registry.__get(registry.__tagsCache.get(name));
+        return registry;
       }
 
       registry = registry.parent;

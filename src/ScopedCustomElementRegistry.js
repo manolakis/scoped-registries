@@ -44,13 +44,6 @@ export class ScopedCustomElementRegistry {
   }
 
   /**
-   * Returns the closest registry in which a tag name is defined or undefined if the tag is not defined.
-   * @param name
-   * @returns {CustomElementRegistry|undefined}
-   */
-  // getRegistry(name) {}
-
-  /**
    * Upgrades all shadow-containing custom elements in a Node subtree, even before they are connected to the main
    * document.
    * @param {Node} root

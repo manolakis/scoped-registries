@@ -33,6 +33,18 @@ describe('polyfillCustomElementRegistry', () => {
         expect(customElements.get('sw-unknown')).to.be.undefined;
       });
     });
+
+    describe('getRegistry', () => {
+      it('should return itself if it contains the defined tag name', async () => {
+        class CatoNeimoidia extends HTMLElement {}
+
+        customElements.define('sw-cato-neimoidia', CatoNeimoidia);
+
+        expect(customElements.getRegistry('sw-cato-neimoidia')).to.be.equal(
+          customElements
+        );
+      });
+    });
   });
 
   describe('Scoped Custom Element Registry', () => {
@@ -107,6 +119,10 @@ describe('polyfillCustomElementRegistry', () => {
 
         expect(registry2.get('sw-unknown')).to.be.undefined;
       });
+    });
+
+    describe('getRegistry', () => {
+      it('should return the closest registry in which a tag name is defined', async () => {});
     });
   });
 });
