@@ -8,11 +8,18 @@ export const polyfillCustomElementRegistry = that => {
   that.__get = that.get;
 
   /**
-   * Tags cache
+   * Contains the registry tags cache
    * @type {Map<string, string>}
    * @private
    */
   that.__tagsCache = new Map();
+
+  /**
+   * Contains the registry defined tags collection
+   * @type {Set<string>}
+   * @private
+   */
+  that.__definedTags = new Set();
 
   /**
    * Checks if is the root Custom Element Registry
@@ -40,14 +47,17 @@ export const polyfillCustomElementRegistry = that => {
    * @param {CustomElementConstructor} constructor
    * @param {ElementDefinitionOptions} [options]
    */
-  that.define = (name, constructor, options) =>
-    that.__isRoot()
+  that.define = (name, constructor, options) => {
+    that.__definedTags.add(name);
+
+    return that.__isRoot()
       ? that.__define(name, constructor, options)
       : that.__define(
           that.__getUniqueTagName(name),
           class extends constructor {},
           options
         );
+  };
 
   /**
    * Returns the closest constructor defined for a tag name in a chain of registries, or undefined if the custom
@@ -76,11 +86,7 @@ export const polyfillCustomElementRegistry = that => {
     let registry = that;
 
     while (registry) {
-      if (registry.__isRoot() && registry.__get(name)) {
-        return registry;
-      }
-
-      if (registry.__tagsCache.has(name)) {
+      if (registry.__definedTags.has(name)) {
         return registry;
       }
 
