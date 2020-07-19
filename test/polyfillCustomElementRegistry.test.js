@@ -1,5 +1,5 @@
 /* eslint max-classes-per-file:0, no-global-assign:0 */
-import { expect } from '@open-wc/testing';
+import { expect, nextFrame } from '@open-wc/testing';
 import { polyfillCustomElementRegistry } from '../src/polyfillCustomElementRegistry.js';
 import { ScopedCustomElementRegistry } from '../src/ScopedCustomElementRegistry.js';
 
@@ -43,6 +43,40 @@ describe('polyfillCustomElementRegistry', () => {
         expect(customElements.getRegistry('sw-cato-neimoidia')).to.be.equal(
           customElements
         );
+      });
+    });
+
+    describe('whenDefined', () => {
+      it('should return a fulfilled promise if element is already defined', async () => {
+        customElements.define('sw-christophsis', class extends HTMLElement {});
+
+        let isFulfilled = false;
+
+        customElements.whenDefined('sw-christophsis').then(() => {
+          isFulfilled = true;
+        });
+
+        await nextFrame();
+
+        expect(isFulfilled).to.be.true;
+      });
+
+      it('should return a promise and fulfill it when element is defined', async () => {
+        let isFulfilled = false;
+
+        customElements.whenDefined('sw-corellia').then(() => {
+          isFulfilled = true;
+        });
+
+        await nextFrame();
+
+        expect(isFulfilled).to.be.false;
+
+        customElements.define('sw-corellia', class extends HTMLElement {});
+
+        await nextFrame();
+
+        expect(isFulfilled).to.be.true;
       });
     });
   });
@@ -123,6 +157,43 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('getRegistry', () => {
       it('should return the closest registry in which a tag name is defined', async () => {});
+    });
+
+    describe('whenDefined', () => {
+      it('should return a fulfilled promise if element is already defined', async () => {
+        const registry = new CustomElementRegistry();
+
+        registry.define('sw-concord-dawn', class extends HTMLElement {});
+
+        let isFulfilled = false;
+
+        registry.whenDefined('sw-concord-dawn').then(() => {
+          isFulfilled = true;
+        });
+
+        await nextFrame();
+
+        expect(isFulfilled).to.be.true;
+      });
+
+      it('should return a promise and fulfill it when element is defined', async () => {
+        const registry = new CustomElementRegistry();
+        let isFulfilled = false;
+
+        registry.whenDefined('sw-coruscant').then(() => {
+          isFulfilled = true;
+        });
+
+        await nextFrame();
+
+        expect(isFulfilled).to.be.false;
+
+        registry.define('sw-coruscant', class extends HTMLElement {});
+
+        await nextFrame();
+
+        expect(isFulfilled).to.be.true;
+      });
     });
   });
 });

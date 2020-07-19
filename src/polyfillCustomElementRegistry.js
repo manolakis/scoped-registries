@@ -6,6 +6,7 @@ export const polyfillCustomElementRegistry = that => {
   // maintains the original methods available
   that.__define = that.define;
   that.__get = that.get;
+  that.__whenDefined = that.whenDefined;
 
   /**
    * Contains the registry tags cache
@@ -95,6 +96,17 @@ export const polyfillCustomElementRegistry = that => {
 
     return undefined;
   };
+
+  /**
+   * Returns an empty promise that resolves when a custom element becomes defined with the given name. If such a
+   * custom element is already defined, the returned promise is immediately fulfilled.
+   * @param {string} name
+   * @returns {Promise<void>}
+   */
+  that.whenDefined = name =>
+    that.__isRoot()
+      ? that.__whenDefined(name)
+      : that.__whenDefined(that.__getUniqueTagName(name));
 
   return that;
 };
