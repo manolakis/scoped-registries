@@ -1,7 +1,6 @@
 import { expect, fixture } from '@open-wc/testing';
-import { polyfillElement } from '../src/polyfillElement.js';
 
-polyfillElement();
+import '../index.js'; // loads the polyfill
 
 describe('polyfillElement', () => {
   it('should attach the registry to the shadow root', async () => {

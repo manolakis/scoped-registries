@@ -36,9 +36,14 @@ export const polyfillCustomElementRegistry = that => {
    * @private
    */
   that.__getUniqueTagName = name => {
+    if (that.__isRoot()) {
+      return name;
+    }
+
     if (!that.__tagsCache.has(name)) {
       that.__tagsCache.set(name, createUniqueTag(name));
     }
+
     return that.__tagsCache.get(name);
   };
 

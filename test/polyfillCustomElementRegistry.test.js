@@ -1,10 +1,7 @@
 /* eslint max-classes-per-file:0, no-global-assign:0 */
 import { expect, nextFrame } from '@open-wc/testing';
-import { polyfillCustomElementRegistry } from '../src/polyfillCustomElementRegistry.js';
-import { ScopedCustomElementRegistry } from '../src/ScopedCustomElementRegistry.js';
 
-polyfillCustomElementRegistry(customElements);
-CustomElementRegistry = ScopedCustomElementRegistry;
+import '../index.js'; // loads the polyfill
 
 describe('polyfillCustomElementRegistry', () => {
   describe('Global Custom Element Registry', () => {
