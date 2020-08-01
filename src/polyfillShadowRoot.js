@@ -1,4 +1,5 @@
 /* eslint no-global-assign:0, no-param-reassign:0, class-methods-use-this:0 */
+import { definitionsRegistry } from './definitionsRegistry.js';
 
 /**
  * Checks if is a custom element tag name.
@@ -31,7 +32,7 @@ export const polyfillShadowRoot = (shadowRoot, registry) => {
 
     const scope = registry.getRegistry(tagName) || registry;
     const element = document.createElement(
-      scope.__getUniqueTagName(tagName),
+      definitionsRegistry.getTagName(tagName, scope),
       options
     );
 
@@ -60,7 +61,7 @@ export const polyfillShadowRoot = (shadowRoot, registry) => {
     const scope = registry.getRegistry(tagName) || registry;
     const element = document.createElementNS(
       namespaceURI,
-      scope.__getUniqueTagName(tagName),
+      definitionsRegistry.getTagName(tagName, scope),
       options
     );
 

@@ -1,55 +1,56 @@
 /* eslint max-classes-per-file:0, no-global-assign:0 */
 import { expect, nextFrame } from '@open-wc/testing';
+import { getTestTagName } from './utils.js';
 
 import '../index.js'; // loads the polyfill
 
 describe('polyfillCustomElementRegistry', () => {
   describe('Global Custom Element Registry', () => {
-    it('should contain a cache for the local defined elements', async () => {
-      expect(customElements.__tagsCache).to.not.be.undefined;
-    });
-
     describe('define', () => {
       it('should not scope defined elements', async () => {
-        customElements.define('sw-ahch-to', class extends HTMLElement {});
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
+        customElements.define(tagName, Element);
 
-        expect(customElements.__tagsCache.has('sw-ahch-to')).to.be.false;
+        const $el = new Element();
+
+        expect($el.tagName.toLowerCase()).to.be.equal(tagName);
       });
     });
 
     describe('get', () => {
       it('should return the constructor defined for a tag name', () => {
-        class Anoat extends HTMLElement {}
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
+        customElements.define(tagName, Element);
 
-        customElements.define('sw-anoat', Anoat);
-
-        expect(customElements.get('sw-anoat')).to.be.equal(Anoat);
+        expect(customElements.get(tagName)).to.be.equal(Element);
       });
 
       it('should return undefined if there is no constructor defined for a tag name', async () => {
-        expect(customElements.get('sw-unknown')).to.be.undefined;
+        expect(customElements.get(getTestTagName())).to.be.undefined;
       });
     });
 
     describe('getRegistry', () => {
       it('should return itself if it contains the defined tag name', async () => {
-        class CatoNeimoidia extends HTMLElement {}
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
+        customElements.define(tagName, Element);
 
-        customElements.define('sw-cato-neimoidia', CatoNeimoidia);
-
-        expect(customElements.getRegistry('sw-cato-neimoidia')).to.be.equal(
-          customElements
-        );
+        expect(customElements.getRegistry(tagName)).to.be.equal(customElements);
       });
     });
 
     describe('whenDefined', () => {
       it('should return a fulfilled promise if element is already defined', async () => {
-        customElements.define('sw-christophsis', class extends HTMLElement {});
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
+        customElements.define(tagName, Element);
 
         let isFulfilled = false;
 
-        customElements.whenDefined('sw-christophsis').then(() => {
+        customElements.whenDefined(tagName).then(() => {
           isFulfilled = true;
         });
 
@@ -59,9 +60,11 @@ describe('polyfillCustomElementRegistry', () => {
       });
 
       it('should return a promise and fulfill it when element is defined', async () => {
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
         let isFulfilled = false;
 
-        customElements.whenDefined('sw-corellia').then(() => {
+        customElements.whenDefined(tagName).then(() => {
           isFulfilled = true;
         });
 
@@ -69,7 +72,7 @@ describe('polyfillCustomElementRegistry', () => {
 
         expect(isFulfilled).to.be.false;
 
-        customElements.define('sw-corellia', class extends HTMLElement {});
+        customElements.define(tagName, Element);
 
         await nextFrame();
 
@@ -97,74 +100,78 @@ describe('polyfillCustomElementRegistry', () => {
       expect(() => new CustomElementRegistry({})).to.throw();
     });
 
-    it('should contain a cache for the local defined elements', async () => {
-      const registry = new CustomElementRegistry();
-
-      expect(registry.__tagsCache).to.not.be.undefined;
-    });
-
     describe('define', () => {
       it('should scope defined elements', async () => {
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
         const registry = new CustomElementRegistry();
 
-        registry.define('sw-alderaan', class extends HTMLElement {});
+        registry.define(tagName, Element);
 
-        expect(registry.__tagsCache.has('sw-alderaan')).to.be.true;
+        const $el = new Element();
+
+        expect($el.tagName.toLowerCase()).to.not.be.equal(tagName);
+        expect($el.tagName.toLowerCase().startsWith(tagName)).to.be.true;
       });
     });
 
     describe('get', () => {
       it('should return the constructor defined for a tag name', () => {
-        class Atollon extends HTMLElement {}
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
         const registry = new CustomElementRegistry();
 
-        registry.define('sw-atollon', Atollon);
+        registry.define(tagName, Element);
 
-        expect(new (registry.get('sw-atollon'))()).to.be.instanceof(Atollon);
+        expect(registry.get(tagName)).to.be.equal(Element);
       });
 
       it('should return undefined if there is no constructor defined for a tag name', async () => {
         const registry = new CustomElementRegistry();
 
-        expect(registry.get('sw-unknown')).to.be.undefined;
+        expect(registry.get(getTestTagName())).to.be.undefined;
       });
 
       it('should return the closest constructor defined for a tag name in the chain of registries', async () => {
-        class Bespin extends HTMLElement {}
-        class BaseStarkiller extends HTMLElement {}
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
+        const tagName2 = getTestTagName();
+        const Element2 = class extends HTMLElement {};
         const registry = new CustomElementRegistry(customElements);
         const registry2 = new CustomElementRegistry(registry);
 
-        customElements.define('sw-bespin', Bespin);
-        registry.define('sw-base-starkiller', BaseStarkiller);
+        customElements.define(tagName, Element);
+        registry.define(tagName2, Element2);
 
-        expect(new (registry2.get('sw-bespin'))()).to.be.instanceof(Bespin);
-        expect(new (registry2.get('sw-base-starkiller'))()).to.be.instanceof(
-          BaseStarkiller
-        );
+        expect(registry2.get(tagName)).to.be.equal(Element);
+        expect(registry2.get(tagName2)).to.be.equal(Element2);
       });
 
       it('should return undefined if there is no constructor defined for a tag name in the chain of registries', async () => {
         const registry = new CustomElementRegistry(customElements);
         const registry2 = new CustomElementRegistry(registry);
 
-        expect(registry2.get('sw-unknown')).to.be.undefined;
+        expect(registry2.get(getTestTagName())).to.be.undefined;
       });
     });
 
     describe('getRegistry', () => {
-      it('should return the closest registry in which a tag name is defined', async () => {});
+      it('should return the closest registry in which a tag name is defined', async () => {
+        // TODO
+      });
     });
 
     describe('whenDefined', () => {
       it('should return a fulfilled promise if element is already defined', async () => {
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
         const registry = new CustomElementRegistry();
 
-        registry.define('sw-concord-dawn', class extends HTMLElement {});
+        registry.define(tagName, Element);
 
         let isFulfilled = false;
 
-        registry.whenDefined('sw-concord-dawn').then(() => {
+        registry.whenDefined(tagName).then(() => {
           isFulfilled = true;
         });
 
@@ -174,10 +181,12 @@ describe('polyfillCustomElementRegistry', () => {
       });
 
       it('should return a promise and fulfill it when element is defined', async () => {
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
         const registry = new CustomElementRegistry();
         let isFulfilled = false;
 
-        registry.whenDefined('sw-coruscant').then(() => {
+        registry.whenDefined(tagName).then(() => {
           isFulfilled = true;
         });
 
@@ -185,7 +194,7 @@ describe('polyfillCustomElementRegistry', () => {
 
         expect(isFulfilled).to.be.false;
 
-        registry.define('sw-coruscant', class extends HTMLElement {});
+        registry.define(tagName, Element);
 
         await nextFrame();
 

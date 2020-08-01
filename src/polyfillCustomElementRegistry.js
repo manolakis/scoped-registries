@@ -1,26 +1,12 @@
 /* eslint no-global-assign:0, no-param-reassign:0, class-methods-use-this:0 */
-import { createUniqueTag } from './createUniqueTag.js';
 import { OriginalCustomElementRegistry } from './constants.js';
+import { definitionsRegistry } from './definitionsRegistry.js';
 
 export const polyfillCustomElementRegistry = that => {
   // maintains the original methods available
   that.__define = that.define;
   that.__get = that.get;
   that.__whenDefined = that.whenDefined;
-
-  /**
-   * Contains the registry tags cache
-   * @type {Map<string, string>}
-   * @private
-   */
-  that.__tagsCache = new Map();
-
-  /**
-   * Contains the registry defined tags collection
-   * @type {Set<string>}
-   * @private
-   */
-  that.__definedTags = new Set();
 
   /**
    * Checks if is the root Custom Element Registry
@@ -30,39 +16,25 @@ export const polyfillCustomElementRegistry = that => {
   that.__isRoot = () => that instanceof OriginalCustomElementRegistry;
 
   /**
-   * Returns a unique tag name for the specified tag name.
-   * @param {string} name
-   * @return {string}
-   * @private
-   */
-  that.__getUniqueTagName = name => {
-    if (that.__isRoot()) {
-      return name;
-    }
-
-    if (!that.__tagsCache.has(name)) {
-      that.__tagsCache.set(name, createUniqueTag(name));
-    }
-
-    return that.__tagsCache.get(name);
-  };
-
-  /**
    * Defines a new custom element. Elements defined in root registry are not scoped.
    * @param {string} name
    * @param {CustomElementConstructor} constructor
    * @param {ElementDefinitionOptions} [options]
    */
   that.define = (name, constructor, options) => {
-    that.__definedTags.add(name);
+    const tagName = definitionsRegistry.getTagName(name, that);
 
-    return that.__isRoot()
-      ? that.__define(name, constructor, options)
-      : that.__define(
-          that.__getUniqueTagName(name),
-          class extends constructor {},
-          options
-        );
+    if (that.__isRoot()) {
+      definitionsRegistry.add({
+        tagName,
+        originalTagName: name,
+        constructor,
+        registry: that,
+      });
+    }
+
+    // TODO should we extend the constructor to avoid duplicates?
+    return that.__define(tagName, constructor, options);
   };
 
   /**
@@ -72,12 +44,18 @@ export const polyfillCustomElementRegistry = that => {
    * @returns {CustomElementConstructor|undefined}
    */
   that.get = name => {
-    const registry = that.getRegistry(name);
+    let registry = that;
 
-    if (registry) {
-      return registry.__isRoot()
-        ? registry.__get(name)
-        : registry.__get(registry.__tagsCache.get(name));
+    while (registry) {
+      const item = definitionsRegistry
+        .findByRegistry(registry)
+        .find(({ originalTagName }) => originalTagName === name);
+
+      if (item) {
+        return item.constructor;
+      }
+
+      registry = registry.parent;
     }
 
     return undefined;
@@ -85,14 +63,18 @@ export const polyfillCustomElementRegistry = that => {
 
   /**
    * Returns the closest registry in which a tag name is defined or undefined if the tag is not defined.
-   * @param name
+   * @param {string} name
    * @returns {CustomElementRegistry|undefined}
    */
   that.getRegistry = name => {
     let registry = that;
 
     while (registry) {
-      if (registry.__definedTags.has(name)) {
+      const registryContainsTagName = !!definitionsRegistry
+        .findByRegistry(registry)
+        .find(({ originalTagName }) => originalTagName === name);
+
+      if (registryContainsTagName) {
         return registry;
       }
 
@@ -111,7 +93,7 @@ export const polyfillCustomElementRegistry = that => {
   that.whenDefined = name =>
     that.__isRoot()
       ? that.__whenDefined(name)
-      : that.__whenDefined(that.__getUniqueTagName(name));
+      : that.__whenDefined(definitionsRegistry.getTagName(name, that));
 
   return that;
 };
