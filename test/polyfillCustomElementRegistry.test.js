@@ -7,6 +7,14 @@ import '../index.js'; // loads the polyfill
 describe('polyfillCustomElementRegistry', () => {
   describe('Global Custom Element Registry', () => {
     describe('define', () => {
+      it('should return the same defined constructor', async () => {
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
+        const ReturnedClass = customElements.define(tagName, Element);
+
+        expect(ReturnedClass).to.be.equal(Element);
+      });
+
       it('should not scope defined elements', async () => {
         const tagName = getTestTagName();
         const Element = class extends HTMLElement {};
@@ -101,14 +109,25 @@ describe('polyfillCustomElementRegistry', () => {
     });
 
     describe('define', () => {
+      it('should return a trivial subclass of the registered class', async () => {
+        const tagName = getTestTagName();
+        const Element = class extends HTMLElement {};
+        const registry = new CustomElementRegistry();
+
+        const NewElement = registry.define(tagName, Element);
+
+        expect(NewElement).to.not.be.equal(Element);
+        expect(Object.getPrototypeOf(NewElement)).to.be.equal(Element);
+      });
+
       it('should scope defined elements', async () => {
         const tagName = getTestTagName();
         const Element = class extends HTMLElement {};
         const registry = new CustomElementRegistry();
 
-        registry.define(tagName, Element);
+        const NewElement = registry.define(tagName, Element);
 
-        const $el = new Element();
+        const $el = new NewElement();
 
         expect($el.tagName.toLowerCase()).to.not.be.equal(tagName);
         expect($el.tagName.toLowerCase().startsWith(tagName)).to.be.true;
@@ -116,14 +135,16 @@ describe('polyfillCustomElementRegistry', () => {
     });
 
     describe('get', () => {
-      it('should return the constructor defined for a tag name', () => {
+      it('should return a subclass of the constructor defined for a tag name', () => {
         const tagName = getTestTagName();
         const Element = class extends HTMLElement {};
         const registry = new CustomElementRegistry();
 
         registry.define(tagName, Element);
 
-        expect(registry.get(tagName)).to.be.equal(Element);
+        expect(Object.getPrototypeOf(registry.get(tagName))).to.be.equal(
+          Element
+        );
       });
 
       it('should return undefined if there is no constructor defined for a tag name', async () => {
@@ -137,14 +158,21 @@ describe('polyfillCustomElementRegistry', () => {
         const Element = class extends HTMLElement {};
         const tagName2 = getTestTagName();
         const Element2 = class extends HTMLElement {};
-        const registry = new CustomElementRegistry({ parent: customElements });
-        const registry2 = new CustomElementRegistry({ parent: registry });
+        const registry = new CustomElementRegistry({
+          parent: customElements,
+          definitions: { [tagName]: Element },
+        });
+        const registry2 = new CustomElementRegistry({
+          parent: registry,
+          definitions: { [tagName2]: Element2 },
+        });
 
-        customElements.define(tagName, Element);
-        registry.define(tagName2, Element2);
-
-        expect(registry2.get(tagName)).to.be.equal(Element);
-        expect(registry2.get(tagName2)).to.be.equal(Element2);
+        expect(Object.getPrototypeOf(registry2.get(tagName))).to.be.equal(
+          Element
+        );
+        expect(Object.getPrototypeOf(registry2.get(tagName2))).to.be.equal(
+          Element2
+        );
       });
 
       it('should return undefined if there is no constructor defined for a tag name in the chain of registries', async () => {
@@ -216,9 +244,45 @@ describe('polyfillCustomElementRegistry', () => {
           },
         });
 
-        expect(registry.get(tagName1)).to.be.equal(Element1);
-        expect(registry.get(tagName2)).to.be.equal(Element2);
+        expect(Object.getPrototypeOf(registry.get(tagName1))).to.be.equal(
+          Element1
+        );
+        expect(Object.getPrototypeOf(registry.get(tagName2))).to.be.equal(
+          Element2
+        );
       });
     });
+  });
+
+  it('should allow custom elements constructors registered in the global registry', async () => {
+    const tagName = getTestTagName();
+    const Element = class extends HTMLElement {};
+    customElements.define(tagName, Element);
+
+    const $el = new Element();
+
+    expect($el).to.be.instanceof(Element);
+  });
+
+  it('should not allow custom elements constructors registered in a custom registry', async () => {
+    const tagName = getTestTagName();
+    const Element = class extends HTMLElement {};
+    const registry = new CustomElementRegistry();
+
+    registry.define(tagName, Element);
+
+    expect(() => new Element()).to.throw();
+  });
+
+  it('should allow custom elements constructors returned by get() or define() in custom registries', async () => {
+    const tagName = getTestTagName();
+    const Element = class extends HTMLElement {};
+    const registry = new CustomElementRegistry();
+    const NewElement = registry.define(tagName, Element);
+
+    const $el = new NewElement();
+
+    expect($el).to.be.instanceof(Element);
+    expect($el).to.be.instanceof(NewElement);
   });
 });

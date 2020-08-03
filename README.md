@@ -17,7 +17,8 @@
         - [X] Add sugar for bulk registrations: `const registry = new CustomElementRegistry({definitions});`
     - [X] `CustomElementRegistry.prototype.get(name: string)`: `get()` now returns the closest constructor defined for a tag name in a chain of registries.
     - [X] `CustomElementRegistry.prototype.getRegistry(name: string)`: Returns the closest registry in which a tag name is defined.
-    - [ ] `define()` returns a new class. The constructor returned by `define()` is from a trivial subclass of the registered class.
+    - [X] `define()` returns a new class. The constructor returned by `define()` is from a trivial subclass of the registered class.
+    - [ ] `getDefinitions()` returns an object map with the tagNames and constructors defined in the registry.
 
 
 - [ ] `ShadowRoot`
@@ -36,4 +37,4 @@
     - [ ] `innerHTML`
 
 
-- [ ] Limit custom elements constructors by default to only looking up registrations from the global registry.
+- [X] Limit custom elements constructors by default to only looking up registrations from the global registry.
