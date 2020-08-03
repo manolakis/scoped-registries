@@ -201,5 +201,24 @@ describe('polyfillCustomElementRegistry', () => {
         expect(isFulfilled).to.be.true;
       });
     });
+
+    describe('bulk definitions', () => {
+      it('should allow sugar for bulk definitions', async () => {
+        const tagName1 = getTestTagName();
+        const Element1 = class extends HTMLElement {};
+        const tagName2 = getTestTagName();
+        const Element2 = class extends HTMLElement {};
+
+        const registry = new CustomElementRegistry({
+          definitions: {
+            [tagName1]: Element1,
+            [tagName2]: Element2,
+          },
+        });
+
+        expect(registry.get(tagName1)).to.be.equal(Element1);
+        expect(registry.get(tagName2)).to.be.equal(Element2);
+      });
+    });
   });
 });

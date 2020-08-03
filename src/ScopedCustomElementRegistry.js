@@ -6,8 +6,9 @@ export class ScopedCustomElementRegistry {
   /**
    * @constructor
    * @param {CustomElementRegistry} [parent]
+   * @param {Object<string, typeof HTMLElement>} [definitions]
    */
-  constructor({ parent } = {}) {
+  constructor({ parent, definitions = {} } = {}) {
     if (
       parent &&
       !(
@@ -18,9 +19,13 @@ export class ScopedCustomElementRegistry {
       throw new Error('Parent must be a CustomElementRegistry instance');
     }
 
+    polyfillCustomElementRegistry(this);
+
     this.parent = parent;
 
-    return polyfillCustomElementRegistry(this);
+    Object.keys(definitions).forEach(tagName =>
+      this.define(tagName, definitions[tagName])
+    );
   }
 
   /**

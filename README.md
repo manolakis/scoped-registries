@@ -9,12 +9,12 @@
 ## TODO
 
 - [ ] `CustomElementRegistry`
-    - [ ] `CustomElementRegistry(parent?: CustomElementRegistry)`
+    - [X] `CustomElementRegistry(parent?: CustomElementRegistry)`
         - [X] CustomElementRegistry is constructable.
         - [X] Able to inherit from a parent registry: `const registry = new CustomElementRegistry({parent});`
         - [X] New definitions added to a registry are not visible to the parent.
         - [X] Mask any registrations with the same name defined in the parent so that definitions can be overridden.
-        - [ ] Add sugar for bulk registrations: `const registry = new CustomElementRegistry({definitions});`
+        - [X] Add sugar for bulk registrations: `const registry = new CustomElementRegistry({definitions});`
     - [X] `CustomElementRegistry.prototype.get(name: string)`: `get()` now returns the closest constructor defined for a tag name in a chain of registries.
     - [X] `CustomElementRegistry.prototype.getRegistry(name: string)`: Returns the closest registry in which a tag name is defined.
     - [ ] `define()` returns a new class. The constructor returned by `define()` is from a trivial subclass of the registered class.
