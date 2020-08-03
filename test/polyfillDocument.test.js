@@ -7,8 +7,8 @@ import '../index.js'; // loads the polyfill
 describe('polyfillDocument', () => {
   it('should define the scope of the created elements', async () => {
     const tagName = getTestTagName();
-    const firstRegistry = new CustomElementRegistry(window.customElements);
-    const secondRegistry = new CustomElementRegistry(firstRegistry);
+    const firstRegistry = new CustomElementRegistry({ parent: customElements });
+    const secondRegistry = new CustomElementRegistry({ parent: firstRegistry });
     const shadowRoot = getScopedShadowRoot(secondRegistry);
 
     const Element = class extends HTMLElement {};

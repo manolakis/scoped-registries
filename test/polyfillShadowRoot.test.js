@@ -60,8 +60,12 @@ describe('polyfillShadowRoot', () => {
 
       it('should create a scoped element in hierarchy', async () => {
         const tagName = getTestTagName();
-        const firstRegistry = new CustomElementRegistry(window.customElements);
-        const secondRegistry = new CustomElementRegistry(firstRegistry);
+        const firstRegistry = new CustomElementRegistry({
+          parent: customElements,
+        });
+        const secondRegistry = new CustomElementRegistry({
+          parent: firstRegistry,
+        });
         const shadowRoot = getScopedShadowRoot(secondRegistry);
 
         const Element = class extends HTMLElement {};

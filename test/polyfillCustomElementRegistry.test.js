@@ -89,15 +89,15 @@ describe('polyfillCustomElementRegistry', () => {
     });
 
     it('should be able to be instantiated with a parent reference', async () => {
-      const registry = new CustomElementRegistry(customElements);
-      const registry2 = new CustomElementRegistry(registry);
+      const registry = new CustomElementRegistry({ parent: customElements });
+      const registry2 = new CustomElementRegistry({ parent: registry });
 
       expect(registry).to.not.be.undefined;
       expect(registry2).to.not.be.undefined;
     });
 
     it('should throw an Error if parent is not an CustomElementRegistry instance', async () => {
-      expect(() => new CustomElementRegistry({})).to.throw();
+      expect(() => new CustomElementRegistry({ parent: {} })).to.throw();
     });
 
     describe('define', () => {
@@ -137,8 +137,8 @@ describe('polyfillCustomElementRegistry', () => {
         const Element = class extends HTMLElement {};
         const tagName2 = getTestTagName();
         const Element2 = class extends HTMLElement {};
-        const registry = new CustomElementRegistry(customElements);
-        const registry2 = new CustomElementRegistry(registry);
+        const registry = new CustomElementRegistry({ parent: customElements });
+        const registry2 = new CustomElementRegistry({ parent: registry });
 
         customElements.define(tagName, Element);
         registry.define(tagName2, Element2);
@@ -148,8 +148,8 @@ describe('polyfillCustomElementRegistry', () => {
       });
 
       it('should return undefined if there is no constructor defined for a tag name in the chain of registries', async () => {
-        const registry = new CustomElementRegistry(customElements);
-        const registry2 = new CustomElementRegistry(registry);
+        const registry = new CustomElementRegistry({ parent: customElements });
+        const registry2 = new CustomElementRegistry({ parent: registry });
 
         expect(registry2.get(getTestTagName())).to.be.undefined;
       });

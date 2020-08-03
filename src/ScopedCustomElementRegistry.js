@@ -7,7 +7,7 @@ export class ScopedCustomElementRegistry {
    * @constructor
    * @param {CustomElementRegistry} [parent]
    */
-  constructor(parent) {
+  constructor({ parent } = {}) {
     if (
       parent &&
       !(

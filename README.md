@@ -11,7 +11,7 @@
 - [ ] `CustomElementRegistry`
     - [ ] `CustomElementRegistry(parent?: CustomElementRegistry)`
         - [X] CustomElementRegistry is constructable.
-        - [ ] Able to inherit from a parent registry: `const registry = new CustomElementRegistry({parent});`
+        - [X] Able to inherit from a parent registry: `const registry = new CustomElementRegistry({parent});`
         - [X] New definitions added to a registry are not visible to the parent.
         - [X] Mask any registrations with the same name defined in the parent so that definitions can be overridden.
         - [ ] Add sugar for bulk registrations: `const registry = new CustomElementRegistry({definitions});`
