@@ -87,6 +87,34 @@ describe('polyfillCustomElementRegistry', () => {
         expect(isFulfilled).to.be.true;
       });
     });
+
+    describe('getDefinitions', () => {
+      it('should return all the registry registrations', async () => {
+        const tagName1 = getTestTagName();
+        const Element1 = class extends HTMLElement {};
+        const tagName2 = getTestTagName();
+        const Element2 = class extends HTMLElement {};
+
+        customElements.define(tagName1, Element1);
+        customElements.define(tagName2, Element2);
+
+        const definitions = customElements.getDefinitions();
+
+        // as customElements is a global registry it probably contains much more defined elements, so for testing
+        // purposes we are going to delete those ones not created in this test case.
+        const allowedKeys = [tagName1, tagName2];
+        Object.keys(definitions).forEach(key => {
+          if (!allowedKeys.includes(key)) {
+            delete definitions[key];
+          }
+        });
+
+        expect(definitions).to.be.eql({
+          [tagName1]: Element1,
+          [tagName2]: Element2,
+        });
+      });
+    });
   });
 
   describe('Scoped Custom Element Registry', () => {
@@ -250,6 +278,29 @@ describe('polyfillCustomElementRegistry', () => {
         expect(Object.getPrototypeOf(registry.get(tagName2))).to.be.equal(
           Element2
         );
+      });
+    });
+
+    describe('getDefinitions', () => {
+      it('should return all the registry registrations', async () => {
+        const tagName1 = getTestTagName();
+        const Element1 = class extends HTMLElement {};
+        const tagName2 = getTestTagName();
+        const Element2 = class extends HTMLElement {};
+
+        const registry = new CustomElementRegistry({
+          definitions: {
+            [tagName1]: Element1,
+            [tagName2]: Element2,
+          },
+        });
+
+        const definitions = registry.getDefinitions();
+
+        expect(definitions).to.be.eql({
+          [tagName1]: registry.get(tagName1),
+          [tagName2]: registry.get(tagName2),
+        });
       });
     });
   });
