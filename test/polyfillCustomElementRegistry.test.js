@@ -1,6 +1,6 @@
 /* eslint max-classes-per-file:0, no-global-assign:0 */
 import { expect, nextFrame } from '@open-wc/testing';
-import { getTestTagName } from './utils.js';
+import { getTestTagName, getTestElement } from './utils.js';
 
 import '../index.js'; // loads the polyfill
 
@@ -8,16 +8,14 @@ describe('polyfillCustomElementRegistry', () => {
   describe('Global Custom Element Registry', () => {
     describe('define', () => {
       it('should return the same defined constructor', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         const ReturnedClass = customElements.define(tagName, Element);
 
         expect(ReturnedClass).to.be.equal(Element);
       });
 
       it('should not scope defined elements', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         customElements.define(tagName, Element);
 
         const $el = new Element();
@@ -28,8 +26,7 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('get', () => {
       it('should return the constructor defined for a tag name', () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         customElements.define(tagName, Element);
 
         expect(customElements.get(tagName)).to.be.equal(Element);
@@ -42,8 +39,7 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('getRegistry', () => {
       it('should return itself if it contains the defined tag name', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         customElements.define(tagName, Element);
 
         expect(customElements.getRegistry(tagName)).to.be.equal(customElements);
@@ -52,8 +48,7 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('whenDefined', () => {
       it('should return a fulfilled promise if element is already defined', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         customElements.define(tagName, Element);
 
         let isFulfilled = false;
@@ -68,8 +63,7 @@ describe('polyfillCustomElementRegistry', () => {
       });
 
       it('should return a promise and fulfill it when element is defined', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         let isFulfilled = false;
 
         customElements.whenDefined(tagName).then(() => {
@@ -90,10 +84,8 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('getDefinitions', () => {
       it('should return all the registry registrations', async () => {
-        const tagName1 = getTestTagName();
-        const Element1 = class extends HTMLElement {};
-        const tagName2 = getTestTagName();
-        const Element2 = class extends HTMLElement {};
+        const { tagName: tagName1, Element: Element1 } = getTestElement();
+        const { tagName: tagName2, Element: Element2 } = getTestElement();
 
         customElements.define(tagName1, Element1);
         customElements.define(tagName2, Element2);
@@ -138,8 +130,7 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('define', () => {
       it('should return a trivial subclass of the registered class', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         const registry = new CustomElementRegistry();
 
         const NewElement = registry.define(tagName, Element);
@@ -149,8 +140,7 @@ describe('polyfillCustomElementRegistry', () => {
       });
 
       it('should scope defined elements', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         const registry = new CustomElementRegistry();
 
         const NewElement = registry.define(tagName, Element);
@@ -164,8 +154,7 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('get', () => {
       it('should return a subclass of the constructor defined for a tag name', () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         const registry = new CustomElementRegistry();
 
         registry.define(tagName, Element);
@@ -182,21 +171,19 @@ describe('polyfillCustomElementRegistry', () => {
       });
 
       it('should return the closest constructor defined for a tag name in the chain of registries', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
-        const tagName2 = getTestTagName();
-        const Element2 = class extends HTMLElement {};
+        const { tagName: tagName1, Element: Element1 } = getTestElement();
+        const { tagName: tagName2, Element: Element2 } = getTestElement();
         const registry = new CustomElementRegistry({
           parent: customElements,
-          definitions: { [tagName]: Element },
+          definitions: { [tagName1]: Element1 },
         });
         const registry2 = new CustomElementRegistry({
           parent: registry,
           definitions: { [tagName2]: Element2 },
         });
 
-        expect(Object.getPrototypeOf(registry2.get(tagName))).to.be.equal(
-          Element
+        expect(Object.getPrototypeOf(registry2.get(tagName1))).to.be.equal(
+          Element1
         );
         expect(Object.getPrototypeOf(registry2.get(tagName2))).to.be.equal(
           Element2
@@ -219,8 +206,7 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('whenDefined', () => {
       it('should return a fulfilled promise if element is already defined', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         const registry = new CustomElementRegistry();
 
         registry.define(tagName, Element);
@@ -237,8 +223,7 @@ describe('polyfillCustomElementRegistry', () => {
       });
 
       it('should return a promise and fulfill it when element is defined', async () => {
-        const tagName = getTestTagName();
-        const Element = class extends HTMLElement {};
+        const { tagName, Element } = getTestElement();
         const registry = new CustomElementRegistry();
         let isFulfilled = false;
 
@@ -260,11 +245,8 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('bulk definitions', () => {
       it('should allow sugar for bulk definitions', async () => {
-        const tagName1 = getTestTagName();
-        const Element1 = class extends HTMLElement {};
-        const tagName2 = getTestTagName();
-        const Element2 = class extends HTMLElement {};
-
+        const { tagName: tagName1, Element: Element1 } = getTestElement();
+        const { tagName: tagName2, Element: Element2 } = getTestElement();
         const registry = new CustomElementRegistry({
           definitions: {
             [tagName1]: Element1,
@@ -283,11 +265,8 @@ describe('polyfillCustomElementRegistry', () => {
 
     describe('getDefinitions', () => {
       it('should return all the registry registrations', async () => {
-        const tagName1 = getTestTagName();
-        const Element1 = class extends HTMLElement {};
-        const tagName2 = getTestTagName();
-        const Element2 = class extends HTMLElement {};
-
+        const { tagName: tagName1, Element: Element1 } = getTestElement();
+        const { tagName: tagName2, Element: Element2 } = getTestElement();
         const registry = new CustomElementRegistry({
           definitions: {
             [tagName1]: Element1,
@@ -306,8 +285,7 @@ describe('polyfillCustomElementRegistry', () => {
   });
 
   it('should allow custom elements constructors registered in the global registry', async () => {
-    const tagName = getTestTagName();
-    const Element = class extends HTMLElement {};
+    const { tagName, Element } = getTestElement();
     customElements.define(tagName, Element);
 
     const $el = new Element();
@@ -316,8 +294,7 @@ describe('polyfillCustomElementRegistry', () => {
   });
 
   it('should not allow custom elements constructors registered in a custom registry', async () => {
-    const tagName = getTestTagName();
-    const Element = class extends HTMLElement {};
+    const { tagName, Element } = getTestElement();
     const registry = new CustomElementRegistry();
 
     registry.define(tagName, Element);
@@ -326,8 +303,7 @@ describe('polyfillCustomElementRegistry', () => {
   });
 
   it('should allow custom elements constructors returned by get() or define() in custom registries', async () => {
-    const tagName = getTestTagName();
-    const Element = class extends HTMLElement {};
+    const { tagName, Element } = getTestElement();
     const registry = new CustomElementRegistry();
     const NewElement = registry.define(tagName, Element);
 

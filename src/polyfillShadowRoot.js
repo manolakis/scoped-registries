@@ -1,5 +1,6 @@
 /* eslint no-global-assign:0, no-param-reassign:0, class-methods-use-this:0 */
 import { definitionsRegistry } from './definitionsRegistry.js';
+import { transform } from './transform.js';
 
 /**
  * Checks if is a custom element tag name.
@@ -9,15 +10,50 @@ import { definitionsRegistry } from './definitionsRegistry.js';
 const isCustomElement = tagName => tagName.includes('-');
 
 /**
+ * Checks if a Node is a custom element.
+ * @param {Node} node
+ * @return {boolean}
+ */
+const isCustomElementNode = node =>
+  node.nodeType === 1 && isCustomElement(node.tagName);
+
+/**
+ * Check if a custom element is upgraded.
+ * @param {Node} node
+ * @return {boolean}
+ */
+const isUpgraded = node =>
+  Object.getPrototypeOf(node).constructor !== HTMLElement;
+
+/**
+ * Transforms an unscoped and non upgraded custom element into a scoped one. It may not been defined.
+ * @param {Node} node
+ * @param {CustomElementRegistry} registry
+ * @return {Element}
+ */
+const transformNode = (node, registry) => {
+  const children = [];
+  const $div = document.createElement('div');
+
+  node.childNodes.forEach(child => {
+    children.push(child);
+    node.removeChild(child);
+  });
+
+  $div.innerHTML = transform(node.outerHTML, registry);
+  children.forEach(child => $div.firstElementChild.appendChild(child));
+
+  return $div.firstElementChild;
+};
+
+/**
  * Enhances a ShadowRoot to allow scoped elements.
  * @param {ShadowRoot} shadowRoot
  * @param {CustomElementRegistry} registry
  * @return {ShadowRoot}
  */
 export const polyfillShadowRoot = (shadowRoot, registry) => {
-  /**
-   * type {CustomElementRegistry}
-   */
+  /** type {CustomElementRegistry} */
   shadowRoot.customElements = registry;
 
   /**
@@ -70,6 +106,68 @@ export const polyfillShadowRoot = (shadowRoot, registry) => {
     }
 
     return element;
+  };
+
+  /**
+   * Creates a copy of a Node or DocumentFragment from another document, to be inserted into the current document
+   * later. The imported node is not yet included in the document tree. To include it, you need to call an insertion
+   * method such as appendChild() or insertBefore() with a node that is currently in the document tree.
+   *
+   * @param {Node} externalNode
+   * @param {boolean} [deep]
+   */
+  shadowRoot.importNode = function importNode(externalNode, deep) {
+    return this.__importNode(externalNode, deep);
+  };
+
+  /**
+   * @param {Node} externalNode
+   * @param {boolean} [deep=true]
+   * @return {Node}
+   */
+  shadowRoot.__importNode = function __importNode(externalNode, deep = true) {
+    return this.__transformCustomElements(externalNode.cloneNode(deep));
+  };
+
+  /**
+   * Transforms the custom elements to use the custom registry defined ones.
+   * @param  {Node} node
+   * @return {Element}
+   * @private
+   */
+  shadowRoot.__transformCustomElements = function __transformCustomElements(
+    node
+  ) {
+    node.childNodes.forEach(childNode => {
+      const transformedNode = this.__transformCustomElements(childNode);
+
+      if (transformedNode !== childNode) {
+        node.replaceChild(transformedNode, childNode);
+      }
+    });
+
+    if (this.__shouldScope(node)) {
+      return transformNode(node, this.customElements);
+    }
+
+    return node;
+  };
+
+  /**
+   * Checks if node must be scoped.
+   *
+   * @param {Node} node
+   * @return {boolean}
+   * @private
+   */
+  shadowRoot.__shouldScope = function __shouldScope(node) {
+    return (
+      isCustomElementNode(node) &&
+      !isUpgraded(node) &&
+      !this.customElements.get(
+        node.unscopedTagName || node.tagName.toLowerCase()
+      )
+    );
   };
 
   return shadowRoot;

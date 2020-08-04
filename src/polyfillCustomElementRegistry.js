@@ -28,7 +28,7 @@ export const polyfillCustomElementRegistry = that => {
       ? constructor
       : class extends constructor {};
 
-    if (that.__isRoot()) {
+    if (isRoot) {
       definitionsRegistry.add({
         tagName,
         originalTagName: name,
@@ -109,7 +109,9 @@ export const polyfillCustomElementRegistry = that => {
     return definitionsRegistry
       .findByRegistry(that)
       .reduce((accumulator, { originalTagName, constructor }) => {
-        accumulator[originalTagName] = constructor;
+        if (constructor) {
+          accumulator[originalTagName] = constructor;
+        }
 
         return accumulator;
       }, {});

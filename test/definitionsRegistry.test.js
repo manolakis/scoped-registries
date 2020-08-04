@@ -1,18 +1,18 @@
 /* eslint max-classes-per-file:0 */
 import { expect } from '@open-wc/testing';
 import { definitionsRegistry } from '../src/definitionsRegistry.js';
-import { getTestTagName } from './utils.js';
+import { getTestTagName, getTestElement } from './utils.js';
 
 import '../index.js'; // loads the polyfill
 
 describe('definitionsRegistry', () => {
   describe('add', () => {
     it('should be able to add a new tag definition', async () => {
-      const tagName = getTestTagName();
+      const { tagName, Element } = getTestElement();
       const item = {
         tagName,
         originalTagName: tagName,
-        constructor: class extends HTMLElement {},
+        constructor: Element,
         registry: new CustomElementRegistry(),
       };
 
@@ -20,43 +20,43 @@ describe('definitionsRegistry', () => {
     });
 
     it('should throw an error if no tagName is provided', async () => {
-      const tagName = getTestTagName();
+      const { tagName, Element } = getTestElement();
 
       expect(() =>
         definitionsRegistry.add({
           originalTagName: tagName,
-          constructor: class extends HTMLElement {},
+          constructor: Element,
           registry: new CustomElementRegistry(),
         })
       ).to.throw('"tagName" is mandatory');
     });
 
     it('should throw an error if no originalTagName is provided', async () => {
-      const tagName = getTestTagName();
+      const { tagName, Element } = getTestElement();
 
       expect(() =>
         definitionsRegistry.add({
           tagName,
-          constructor: class extends HTMLElement {},
+          constructor: Element,
           registry: new CustomElementRegistry(),
         })
       ).to.throw('"originalTagName" is mandatory');
     });
 
     it('should throw an error if no registry is provided', async () => {
-      const tagName = getTestTagName();
+      const { tagName, Element } = getTestElement();
 
       expect(() =>
         definitionsRegistry.add({
           tagName,
           originalTagName: tagName,
-          constructor: class extends HTMLElement {},
+          constructor: Element,
         })
       ).to.throw('"registry" is mandatory');
     });
 
     it('should allow to add a tagDefinition without a constructor', async () => {
-      const tagName = getTestTagName();
+      const { tagName } = getTestElement();
 
       definitionsRegistry.add({
         tagName,
@@ -66,11 +66,12 @@ describe('definitionsRegistry', () => {
     });
 
     it('should thor an error if two elements are registered with the same tagName', async () => {
-      const tagName = getTestTagName();
+      const { tagName, Element } = getTestElement();
+      const { Element: Element2 } = getTestElement();
       const item = {
         tagName,
         originalTagName: tagName,
-        constructor: class extends HTMLElement {},
+        constructor: Element,
         registry: new CustomElementRegistry(),
       };
 
@@ -79,7 +80,7 @@ describe('definitionsRegistry', () => {
       expect(() =>
         definitionsRegistry.add({
           ...item,
-          constructor: class extends HTMLElement {},
+          constructor: Element2,
         })
       ).to.throw(
         `the name "${tagName}" has already been used with this registry`
@@ -87,11 +88,12 @@ describe('definitionsRegistry', () => {
     });
 
     it('should thor an error if two elements are registered with the same constructor', async () => {
-      const tagName = getTestTagName();
+      const { tagName, Element } = getTestElement();
+      const { tagName: tagName2 } = getTestElement();
       const item = {
         tagName,
         originalTagName: tagName,
-        constructor: class extends HTMLElement {},
+        constructor: Element,
         registry: new CustomElementRegistry(),
       };
 
@@ -100,39 +102,40 @@ describe('definitionsRegistry', () => {
       expect(() =>
         definitionsRegistry.add({
           ...item,
-          tagName: getTestTagName(),
+          tagName: tagName2,
         })
       ).to.throw('this constructor has already been used with this registry');
     });
 
     it('should allow to register elements with the same original tagName', async () => {
-      const tagName = getTestTagName();
+      const { tagName, Element } = getTestElement();
+      const { tagName: tagName2, Element: Element2 } = getTestElement();
       const item = {
         tagName,
         originalTagName: tagName,
-        constructor: class extends HTMLElement {},
+        constructor: Element,
         registry: new CustomElementRegistry(),
       };
 
       definitionsRegistry.add(item);
       definitionsRegistry.add({
         ...item,
-        tagName: getTestTagName(),
-        constructor: class extends HTMLElement {},
+        tagName: tagName2,
+        constructor: Element2,
       });
     });
   });
 
   describe('getTagName', () => {
     it('should return a the scopedTagName associated with the specified tagName and registry', () => {
-      const originalTagName = getTestTagName();
-      const scopedTagName = getTestTagName();
+      const { tagName: originalTagName, Element } = getTestElement();
+      const { tagName: scopedTagName } = getTestElement();
       const registry = new CustomElementRegistry();
 
       definitionsRegistry.add({
         tagName: scopedTagName,
         originalTagName,
-        constructor: class extends HTMLElement {},
+        constructor: Element,
         registry,
       });
 
@@ -142,7 +145,7 @@ describe('definitionsRegistry', () => {
     });
 
     it('should return a new scopedTagName if no originalTagName is found and is not the global registry', async () => {
-      const originalTagName = getTestTagName();
+      const { tagName: originalTagName } = getTestElement();
 
       const scopedTagName = definitionsRegistry.getTagName(
         originalTagName,
@@ -154,7 +157,7 @@ describe('definitionsRegistry', () => {
     });
 
     it('should return originalTagName if no originalTagName is found and is the global registry', async () => {
-      const originalTagName = getTestTagName();
+      const { tagName: originalTagName } = getTestElement();
 
       const scopedTagName = definitionsRegistry.getTagName(
         originalTagName,
@@ -168,11 +171,11 @@ describe('definitionsRegistry', () => {
 
   describe('findByTagName', () => {
     it('should find an existing element by its tagName', async () => {
-      const tagName = getTestTagName();
+      const { tagName, Element } = getTestElement();
       const item = {
         tagName,
         originalTagName: tagName,
-        constructor: class extends HTMLElement {},
+        constructor: Element,
         registry: new CustomElementRegistry(),
       };
 
@@ -189,22 +192,24 @@ describe('definitionsRegistry', () => {
 
   describe('findByOriginalTagName', () => {
     it('should return a list of elements with the same originalTagName', async () => {
-      const tagName = getTestTagName();
+      const { tagName: originalTagName } = getTestElement();
+      const { tagName: tagName1, Element: Element1 } = getTestElement();
+      const { tagName: tagName2, Element: Element2 } = getTestElement();
       definitionsRegistry.add({
-        tagName: getTestTagName(),
-        originalTagName: tagName,
-        constructor: class extends HTMLElement {},
+        tagName: tagName1,
+        originalTagName,
+        constructor: Element1,
         registry: new CustomElementRegistry(),
       });
       definitionsRegistry.add({
-        tagName: getTestTagName(),
-        originalTagName: tagName,
-        constructor: class extends HTMLElement {},
+        tagName: tagName2,
+        originalTagName,
+        constructor: Element2,
         registry: new CustomElementRegistry(),
       });
 
       expect(
-        definitionsRegistry.findByOriginalTagName(tagName).length
+        definitionsRegistry.findByOriginalTagName(originalTagName).length
       ).to.be.equal(2);
     });
 
@@ -217,43 +222,42 @@ describe('definitionsRegistry', () => {
 
   describe('findByConstructor', () => {
     it('should find an existing element by its constructor', async () => {
-      const tagName = getTestTagName();
-      const constructor = class extends HTMLElement {};
+      const { tagName, Element } = getTestElement();
       const item = {
         tagName,
         originalTagName: tagName,
-        constructor,
+        constructor: Element,
         registry: new CustomElementRegistry(),
       };
 
       definitionsRegistry.add(item);
 
-      expect(definitionsRegistry.findByConstructor(constructor)).to.be.eql(
-        item
-      );
+      expect(definitionsRegistry.findByConstructor(Element)).to.be.eql(item);
     });
 
     it('should return undefined if an element is not found', async () => {
-      expect(
-        definitionsRegistry.findByConstructor(class extends HTMLElement {})
-      ).to.be.undefined;
+      const { Element } = getTestElement();
+
+      expect(definitionsRegistry.findByConstructor(Element)).to.be.undefined;
     });
   });
 
   describe('findByRegistry', () => {
     it('should return a list of elements with the same originalTagName', async () => {
       const registry = new CustomElementRegistry();
+      const { tagName: tagName1, Element: Element1 } = getTestElement();
+      const { tagName: tagName2, Element: Element2 } = getTestElement();
 
       definitionsRegistry.add({
-        tagName: getTestTagName(),
+        tagName: tagName1,
         originalTagName: getTestTagName(),
-        constructor: class extends HTMLElement {},
+        constructor: Element1,
         registry,
       });
       definitionsRegistry.add({
-        tagName: getTestTagName(),
+        tagName: tagName2,
         originalTagName: getTestTagName(),
-        constructor: class extends HTMLElement {},
+        constructor: Element2,
         registry,
       });
 

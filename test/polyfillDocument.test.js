@@ -1,28 +1,26 @@
 /* eslint max-classes-per-file:0, no-global-assign:0 */
 import { expect } from '@open-wc/testing';
-import { getTestTagName, getScopedShadowRoot } from './utils.js';
+import { getTestElement, getScopedShadowRoot } from './utils.js';
 
 import '../index.js'; // loads the polyfill
 
 describe('polyfillDocument', () => {
   it('should define the scope of the created elements', async () => {
-    const tagName = getTestTagName();
+    const { tagName, Element: Element1 } = getTestElement();
+    const { Element: Element2 } = getTestElement();
+    const { Element: Element3 } = getTestElement();
     const firstRegistry = new CustomElementRegistry({ parent: customElements });
     const secondRegistry = new CustomElementRegistry({ parent: firstRegistry });
-    const shadowRoot = getScopedShadowRoot(secondRegistry);
+    const secondRegistryShadowRoot = getScopedShadowRoot(secondRegistry);
 
-    const Element = class extends HTMLElement {};
-    const Element2 = class extends HTMLElement {};
-    const Element3 = class extends HTMLElement {};
-
-    customElements.define(tagName, Element);
-    const el1 = shadowRoot.createElement(tagName);
+    customElements.define(tagName, Element1);
+    const el1 = secondRegistryShadowRoot.createElement(tagName);
 
     firstRegistry.define(tagName, Element2);
-    const el2 = shadowRoot.createElement(tagName);
+    const el2 = secondRegistryShadowRoot.createElement(tagName);
 
     secondRegistry.define(tagName, Element3);
-    const el3 = shadowRoot.createElement(tagName);
+    const el3 = secondRegistryShadowRoot.createElement(tagName);
 
     expect(el1.scope).to.be.equal(document);
     expect(el2.scope).to.be.equal(firstRegistry);
