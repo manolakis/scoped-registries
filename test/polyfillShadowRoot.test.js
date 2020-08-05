@@ -55,13 +55,13 @@ describe('polyfillShadowRoot', () => {
         expect($el.tagName.toLowerCase()).to.equal(tagName);
       });
 
-      it('should set a Document the scope of regular elements', async () => {
+      it('should set the shadowRoot as the scope of regular elements', async () => {
         const tagName = 'div';
         const shadowRoot = getScopedShadowRoot(new CustomElementRegistry());
 
-        const Sel = shadowRoot.createElement(tagName);
+        const $el = shadowRoot.createElement(tagName);
 
-        expect(Sel.scope).to.equal(document);
+        expect($el.scope).to.equal(shadowRoot);
       });
 
       it('should create a scoped element in hierarchy', async () => {
@@ -156,30 +156,33 @@ describe('polyfillShadowRoot', () => {
 
       it('should import a node tree with an upgraded custom element with deep = true', async () => {
         const { tagName, Element } = getTestElement();
-        const createTemplate = tag => `<${tag}><span>data</span></${tag}>`;
         const registry = new CustomElementRegistry();
         const shadowRoot = getScopedShadowRoot(registry);
         customElements.define(tagName, Element);
-        const $div = wrapHTML(createTemplate(tagName));
+        const $div = wrapHTML(`<${tagName}><span>data</span></${tagName}>`);
 
         const $clone = shadowRoot.importNode($div, true);
 
-        expect($clone.innerHTML).to.be.equal(createTemplate(tagName));
+        expect($clone.innerHTML).to.be.equal(
+          `<${tagName}><span>data</span></${tagName}>`
+        );
       });
 
       it('should import a template with an upgraded custom element with deep = true', async () => {
         const { tagName, Element } = getTestElement();
-        const createTemplate = tag => `<${tag}><span>data</span></${tag}>`;
+
         const registry = new CustomElementRegistry({ parent: customElements });
         const shadowRoot = getScopedShadowRoot(registry);
         customElements.define(tagName, Element);
-        const $template = createTemplateElement(createTemplate(tagName));
+        const $template = createTemplateElement(
+          `<${tagName}><span>data</span></${tagName}>`
+        );
 
         const $clone = shadowRoot.importNode($template.content, true);
 
         expect($clone).to.be.instanceof(DocumentFragment);
         expect($clone.firstElementChild.outerHTML).to.be.equal(
-          createTemplate(tagName)
+          `<${tagName}><span>data</span></${tagName}>`
         );
       });
 

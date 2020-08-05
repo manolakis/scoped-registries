@@ -1,6 +1,5 @@
 /* eslint no-global-assign:0, no-param-reassign:0, class-methods-use-this:0 */
 import { definitionsRegistry } from './definitionsRegistry.js';
-import { transform } from './transform.js';
 
 /**
  * Checks if is a custom element tag name.
@@ -26,27 +25,6 @@ const isUpgraded = node =>
   Object.getPrototypeOf(node).constructor !== HTMLElement;
 
 /**
- * Transforms an unscoped and non upgraded custom element into a scoped one. It may not been defined.
- * @param {Node} node
- * @param {CustomElementRegistry} registry
- * @return {Element}
- */
-const transformNode = (node, registry) => {
-  const children = [];
-  const $div = document.createElement('div');
-
-  node.childNodes.forEach(child => {
-    children.push(child);
-    node.removeChild(child);
-  });
-
-  $div.innerHTML = transform(node.outerHTML, registry);
-  children.forEach(child => $div.firstElementChild.appendChild(child));
-
-  return $div.firstElementChild;
-};
-
-/**
  * Enhances a ShadowRoot to allow scoped elements.
  * @param {ShadowRoot} shadowRoot
  * @param {CustomElementRegistry} registry
@@ -63,7 +41,11 @@ export const polyfillShadowRoot = (shadowRoot, registry) => {
    */
   shadowRoot.createElement = function createElement(tagName, options) {
     if (!isCustomElement(tagName)) {
-      return document.createElement(tagName, options);
+      const $el = document.createElement(tagName, options);
+
+      $el.scope = shadowRoot;
+
+      return $el;
     }
 
     const scope = registry.getRegistry(tagName) || registry;
@@ -147,10 +129,30 @@ export const polyfillShadowRoot = (shadowRoot, registry) => {
     });
 
     if (this.__shouldScope(node)) {
-      return transformNode(node, this.customElements);
+      return this.__transformNode(node);
     }
 
     return node;
+  };
+
+  /**
+   * Transforms an unscoped and non upgraded custom element into a scoped one. It may not been defined.
+   * @param {Node} node
+   * @return {Element}
+   */
+  shadowRoot.__transformNode = function __transformNode(node) {
+    const children = [];
+    const $div = this.createElement('div');
+
+    node.childNodes.forEach(child => {
+      children.push(child);
+      node.removeChild(child);
+    });
+
+    $div.innerHTML = node.outerHTML;
+    children.forEach(child => $div.firstElementChild.appendChild(child));
+
+    return $div.firstElementChild;
   };
 
   /**
@@ -165,7 +167,7 @@ export const polyfillShadowRoot = (shadowRoot, registry) => {
       isCustomElementNode(node) &&
       !isUpgraded(node) &&
       !this.customElements.get(
-        node.unscopedTagName || node.tagName.toLowerCase()
+        node.dataset.tagName || node.tagName.toLowerCase()
       )
     );
   };

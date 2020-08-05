@@ -1,18 +1,5 @@
 import { definitionsRegistry } from './definitionsRegistry.js';
 
-const NONE = 0;
-const OPEN = 1;
-const CLOSE = 2;
-
-/**
- * Allowed tag name characters
- *
- * @type {string[]}
- */
-const TAGNAME_CHARS = '-.0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(
-  ''
-);
-
 /**
  * Characters used to open a string
  *
@@ -23,93 +10,83 @@ const OPEN_STRING_CHARS = `"'`.split('');
 /**
  * Checks if the next token is an string
  *
- * @param {string} str
- * @param {number} index
+ * @param {string} character
  * @returns {boolean}
  */
-const isOpenString = (str, index) => OPEN_STRING_CHARS.includes(str[index]);
+const isOpeningString = character => OPEN_STRING_CHARS.includes(character);
 
 /**
- * Returns the length of the opening or closing chars of a tag name
- *
- * @param {string} str
- * @param {number} index
- * @returns {number}
+ * Returns the index within the calling String object of the first occurrence of the specified value, starting the
+ * search at fromIndex and avoiding the "strings" in the template . Returns -1 if the value is not found.
+ * @param {string} template
+ * @param {string} value
+ * @param {number} fromIndex
+ * @return {number}
  */
-const getStartTagLength = (str, index) => {
-  if (str[index] !== '<') return NONE;
-  if (str[index + 1] === '/') return CLOSE;
+const search = (template, value, fromIndex) => {
+  let index = fromIndex;
+  let inString = false;
 
-  return OPEN;
+  while (index !== template.length) {
+    if (isOpeningString(template[index])) {
+      inString = !inString;
+    } else if (!inString && template[index] === value) {
+      return index;
+    }
+
+    index += 1;
+  }
+
+  return -1;
 };
 
 /**
- * Obtains the next name in the string from the index
- *
- * @param {string} str
- * @param {number} index
- * @returns {{isCustomElement: boolean, index: *, tagName: string}}
+ * Returns the index of the first starting node occurrence. Returns -1 if not found.
+ * @param {string} template
+ * @param {number} [fromIndex=0]
+ * @return {number}
  */
-const getName = (str, index) => {
-  let i = index;
-  let isCustomElement = false;
-
-  while (TAGNAME_CHARS.includes(str[i])) {
-    isCustomElement = isCustomElement || str[i] === '-';
-
-    i += 1;
-  }
-
-  return {
-    index,
-    isCustomElement,
-    tagName: str.substring(index, i),
-  };
-};
+const searchStart = (template, fromIndex = 0) =>
+  search(template, '<', fromIndex);
 
 /**
- * Find custom element tags in the string
- *
- * @param {string} str
- * @returns {{index: number, tagName: string}[]}
+ * Returns the index of the first ending node occurrence. Returns -1 if not found.
+ * @param {string} template
+ * @param {number} fromIndex
+ * @return {number}
  */
-const matchAll = str => {
-  const matches = [];
-  let openStringChar;
+const searchEnd = (template, fromIndex) => search(template, '>', fromIndex);
 
-  for (let index = 0; index < str.length; index += 1) {
-    if (!openStringChar) {
-      const startTagLength = getStartTagLength(str, index);
+/**
+ * Checks if is a valid custom element name.
+ * @param {string} data
+ * @return {boolean}
+ */
+const isCustomElement = data => data.includes('-'); // TODO it could be a better algorithm
 
-      if (startTagLength !== NONE) {
-        index += startTagLength;
+/**
+ * Transforms a node into a scoped one if valid.
+ * @param {string} data
+ * @param {boolean} isClosingTag
+ * @param {CustomElementRegistry} registry
+ * @return {string}
+ */
+const transformNode = (data, isClosingTag, registry) => {
+  const [tagName, ...attrs] = data.substring(isClosingTag ? 2 : 1).split(/\s/);
 
-        const tagName = getName(str, index);
-
-        if (tagName.isCustomElement) {
-          matches.push({
-            index: tagName.index,
-            tagName: tagName.tagName,
-            type: startTagLength,
-          });
-        }
-
-        index += tagName.tagName.length;
-      }
-
-      if (isOpenString(str, index)) {
-        openStringChar = str[index];
-        index += 1;
-      }
-    }
-
-    if (str[index] === openStringChar) {
-      index += 1;
-      openStringChar = undefined;
-    }
+  if (!isCustomElement(tagName) || registry === customElements) {
+    return data;
   }
 
-  return matches;
+  const scopedTagName = definitionsRegistry.getTagName(tagName, registry);
+
+  if (isClosingTag) {
+    return `</${scopedTagName}`;
+  }
+
+  attrs.splice(0, 0, scopedTagName, `data-tag-name="${tagName}"`);
+
+  return `<${attrs.join(' ')}`;
 };
 
 /**
@@ -120,20 +97,23 @@ const matchAll = str => {
  * @returns {string}
  */
 export const transform = (template, registry) => {
-  let acc = template;
-  const matches = matchAll(template);
+  let acc = '';
+  let start = searchStart(template);
+  let end = 0;
+  let isClosingTag = false;
 
-  for (let i = matches.length - 1; i >= 0; i -= 1) {
-    const { index, tagName, type } = matches[i];
-    const tag = definitionsRegistry.getTagName(tagName, registry);
-    const start = index;
-    const end = start + tagName.length;
+  while (start !== -1) {
+    acc += template.slice(end, start);
 
-    acc =
-      acc.slice(0, start) +
-      (type === OPEN ? `${tag} data-tag-name="${tagName}"` : tag) +
-      acc.slice(end);
+    isClosingTag = template[start + 1] === '/';
+    end = searchEnd(template, start + 1);
+
+    acc += transformNode(template.slice(start, end), isClosingTag, registry);
+
+    start = searchStart(template, end + 1);
   }
+
+  acc += template.slice(end, template.length);
 
   return acc;
 };
