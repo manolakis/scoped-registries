@@ -1,5 +1,33 @@
 /* eslint no-global-assign:0, no-param-reassign:0, class-methods-use-this:0 */
 import { definitionsRegistry } from './definitionsRegistry.js';
+import { transform } from './transform.js';
+
+const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
+  ShadowRoot.prototype,
+  'innerHTML'
+);
+
+const setScope = (node, scope) => {
+  node.childNodes.forEach(child => setScope(child, scope));
+  node.scope = scope;
+};
+
+Object.defineProperty(ShadowRoot.prototype, 'innerHTML', {
+  ...originalInnerHTMLDescriptor,
+  // eslint-disable-next-line object-shorthand,func-names
+  set: function (value) {
+    const registry = this.customElements || window.customElements;
+
+    const $data = originalInnerHTMLDescriptor.set.call(
+      this,
+      transform(value, registry)
+    );
+
+    this.childNodes.forEach(child => setScope(child, this));
+
+    return $data;
+  },
+});
 
 /**
  * Checks if is a custom element tag name.

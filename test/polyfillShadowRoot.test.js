@@ -11,7 +11,7 @@ import {
 import '../index.js'; // loads the polyfill
 
 describe('polyfillShadowRoot', () => {
-  describe('CustomElementRegistry', () => {
+  describe('with global registry', () => {
     describe('createElement', () => {
       it('should create a scoped custom element', async () => {
         const tagName = getTestTagName();
@@ -33,7 +33,7 @@ describe('polyfillShadowRoot', () => {
     });
   });
 
-  describe('ScopedCustomElementRegistry', () => {
+  describe('with scoped registry', () => {
     describe('createElement', () => {
       it('should create a scoped custom element', async () => {
         const tagName = getTestTagName();
@@ -154,7 +154,7 @@ describe('polyfillShadowRoot', () => {
         expect($clone.firstElementChild.outerHTML).to.be.equal(html);
       });
 
-      it('should import a node tree with an upgraded custom element with deep = true', async () => {
+      it('should import a node tree with an upgraded custom element with deep  = true', async () => {
         const { tagName, Element } = getTestElement();
         const registry = new CustomElementRegistry();
         const shadowRoot = getScopedShadowRoot(registry);
@@ -216,6 +216,31 @@ describe('polyfillShadowRoot', () => {
         expect($clone.firstElementChild.outerHTML).to.match(
           new RegExp(
             `<${tagName}-\\d{1,5} data-tag-name="${tagName}"><span>data</span></${tagName}-\\d{1,5}>`
+          )
+        );
+      });
+    });
+
+    describe('innerHTML', async () => {
+      it('should not scope the custom elements if is using the global registry', async () => {
+        const shadowRoot = getScopedShadowRoot();
+
+        shadowRoot.innerHTML = '<my-tag><span>data</span></my-tag>';
+
+        expect(shadowRoot.innerHTML).to.equal(
+          '<my-tag><span>data</span></my-tag>'
+        );
+      });
+
+      it('should scope the custom elements if is using a scoped registry', async () => {
+        const registry = new CustomElementRegistry();
+        const shadowRoot = getScopedShadowRoot(registry);
+
+        shadowRoot.innerHTML = '<my-tag><span>data</span></my-tag>';
+
+        expect(shadowRoot.innerHTML).to.match(
+          new RegExp(
+            `<my-tag-\\d{1,5} data-tag-name="my-tag"><span>data</span></my-tag-\\d{1,5}>`
           )
         );
       });

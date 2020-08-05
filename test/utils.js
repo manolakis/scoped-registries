@@ -23,18 +23,24 @@ export const getTestElement = () => ({
  * @param {CustomElementRegistry} customElementRegistry
  * @return {ShadowRoot}
  */
-export const getScopedShadowRoot = (
-  customElementRegistry = window.customElements
-) => {
+export const getScopedShadowRoot = customElementRegistry => {
   const tagName = getTestTagName();
   const Element = class extends HTMLElement {
     constructor() {
       super();
 
-      this.attachShadow({
+      const initOptions = {
         mode: 'open',
-        customElements: customElementRegistry,
-      });
+      };
+
+      if (
+        !customElementRegistry ||
+        customElementRegistry !== window.customElements
+      ) {
+        initOptions.customElements = customElementRegistry;
+      }
+
+      this.attachShadow(initOptions);
     }
   };
 
