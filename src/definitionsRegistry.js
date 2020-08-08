@@ -9,8 +9,10 @@ import { createUniqueTag } from './createUniqueTag.js';
  */
 
 class DefinitionsRegistry {
-  /** @type {TagDefinition[]} */
-  #items = [];
+  constructor() {
+    /** @type {TagDefinition[]} */
+    this._items = [];
+  }
 
   /**
    * Adds a new tag definition.
@@ -43,7 +45,7 @@ class DefinitionsRegistry {
 
       item.constructor = constructor;
     } else {
-      this.#items.push({
+      this._items.push({
         tagName,
         originalTagName,
         constructor,
@@ -100,7 +102,7 @@ class DefinitionsRegistry {
       return undefined;
     }
 
-    return this.#items.find(({ tagName: x }) => x === tagName);
+    return this._items.find(({ tagName: x }) => x === tagName);
   }
 
   /**
@@ -110,7 +112,7 @@ class DefinitionsRegistry {
    * @return {TagDefinition[]}
    */
   findByOriginalTagName(tagName) {
-    return this.#items.filter(
+    return this._items.filter(
       ({ originalTagName }) => originalTagName === tagName
     );
   }
@@ -126,7 +128,7 @@ class DefinitionsRegistry {
       return undefined;
     }
 
-    return this.#items.find(({ constructor: x }) => x === constructor);
+    return this._items.find(({ constructor: x }) => x === constructor);
   }
 
   /**
@@ -136,7 +138,7 @@ class DefinitionsRegistry {
    * @return {TagDefinition[]}
    */
   findByRegistry(registry) {
-    return this.#items.filter(({ registry: x }) => x === registry);
+    return this._items.filter(({ registry: x }) => x === registry);
   }
 }
 

@@ -16,13 +16,14 @@
     "lint:eclint": "git ls-files | xargs eclint check",
     "lint:markdownlint": "git ls-files '*.md' | xargs markdownlint --ignore '**/CHANGELOG.md' --ignore '__snapshots__/**/*.md'",
     "test": "wtr test/**/*.test.js --node-resolve --coverage",
-    "test:watch": "wtr test/**/*.test.js --node-resolve --watch"
+    "test:watch": "wtr test/**/*.test.js --node-resolve --watch --playwright --browsers chromium firefox webkit"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^9",
     "@open-wc/eslint-config": "^2",
     "@open-wc/testing": "^2",
     "@web/test-runner": "^0.6.24",
+    "@web/test-runner-playwright": "^0.4.22",
     "eclint": "^2",
     "eslint": "^7",
     "eslint-config-prettier": "^6",
