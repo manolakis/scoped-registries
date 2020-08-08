@@ -1,6 +1,7 @@
 import { definitionsRegistry } from './definitionsRegistry.js';
 import { polyfillShadowRoot } from './polyfillShadowRoot.js';
 import { transform } from './transform.js';
+import { cssTransform } from './cssTransform.js';
 
 const getScope = element => {
   const rootNode = element.getRootNode();
@@ -89,6 +90,8 @@ export const polyfillElement = () => {
 
   // maintains the original methods available
   that.__attachShadow = that.attachShadow;
+  that.__querySelector = that.querySelector;
+  that.__querySelectorAll = that.querySelectorAll;
 
   /**
    * Creates a shadow root for element and returns it.
@@ -100,5 +103,31 @@ export const polyfillElement = () => {
     customElements = window.customElements,
   }) {
     return polyfillShadowRoot(this.__attachShadow({ mode }), customElements);
+  };
+
+  /**
+   * Returns the first Element within the document that matches the specified selector, or group of selectors. If no
+   * matches are found, null is returned.
+   * @param {string} query
+   * @return {Element|null}
+   */
+  that.querySelector = function querySelector(query) {
+    const scope = getScope(this);
+    const registry = getRegistry(scope);
+
+    return this.__querySelector(cssTransform(query, registry));
+  };
+
+  /**
+   * Returns a static (not live) NodeList representing a list of the document's elements that match the specified
+   * group of selectors.
+   * @param {string} query
+   * @return {Element[]}
+   */
+  that.querySelectorAll = function querySelectorAll(query) {
+    const scope = getScope(this);
+    const registry = getRegistry(scope);
+
+    return this.__querySelectorAll(cssTransform(query, registry));
   };
 };
