@@ -28,8 +28,6 @@
   - [X] `innerHTML`
   - [X] `querySelector()`: Must transform the tag selector to search by the scoped ones.
   - [X] `querySelectorAll()`: Must transform the tag selector to search by the scoped ones.
-  - [ ] `getElementsByTagName()`: Must transform the tag name to search by the scoped one.
-  - [ ] `getElementsByTagNameNS()`: Must transform the tag name to search by the scoped one.
   - [ ] `styles`: Needs more investigation about how to proceed.
 
 - [X] `Element`
