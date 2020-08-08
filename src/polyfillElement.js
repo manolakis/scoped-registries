@@ -2,6 +2,7 @@ import { definitionsRegistry } from './definitionsRegistry.js';
 import { polyfillShadowRoot } from './polyfillShadowRoot.js';
 import { transform } from './transform.js';
 import { cssTransform } from './cssTransform.js';
+import { HTMLCollection } from './HTMLCollection.js';
 
 const getScope = element => {
   const rootNode = element.getRootNode();
@@ -84,6 +85,8 @@ export const polyfillElement = () => {
   that.__attachShadow = that.attachShadow;
   that.__querySelector = that.querySelector;
   that.__querySelectorAll = that.querySelectorAll;
+  that.__getElementsByTagName = that.getElementsByTagName;
+  that.__getElementsByTagNameNS = that.getElementsByTagNameNS;
 
   /**
    * Creates a shadow root for element and returns it.
@@ -121,5 +124,58 @@ export const polyfillElement = () => {
     const registry = getRegistry(scope);
 
     return this.__querySelectorAll(cssTransform(query, registry));
+  };
+
+  /**
+   *
+   * @param tagName
+   * @return {HTMLCollection|any}
+   */
+  that.getElementsByTagName = function getElementsByTagName(tagName) {
+    const tagDefinitions = definitionsRegistry.findByOriginalTagName(tagName);
+
+    switch (tagDefinitions.length) {
+      case 0:
+        return this.__getElementsByTagName(tagName);
+      case 1:
+        return this.__getElementsByTagName(tagDefinitions[0].tagName);
+      default:
+        // FIXME this is not a live collection. Maybe with an observer?
+        return new HTMLCollection(
+          tagDefinitions
+            .map(({ tagName: scopedTagName }) =>
+              Array.from(this.__getElementsByTagName(scopedTagName))
+            )
+            .reduce((acc, items) => acc.concat(...items), [])
+        );
+    }
+  };
+
+  that.getElementsByTagNameNS = function getElementsByTagNameNS(
+    namespace,
+    tagName
+  ) {
+    const tagDefinitions = definitionsRegistry.findByOriginalTagName(tagName);
+
+    switch (tagDefinitions.length) {
+      case 0:
+        return this.__getElementsByTagNameNS(namespace, tagName);
+      case 1:
+        return this.__getElementsByTagNameNS(
+          namespace,
+          tagDefinitions[0].tagName
+        );
+      default:
+        // FIXME this is not a live collection. Maybe with an observer?
+        return new HTMLCollection(
+          tagDefinitions
+            .map(({ tagName: scopedTagName }) =>
+              Array.from(
+                this.__getElementsByTagNameNS(namespace, scopedTagName)
+              )
+            )
+            .reduce((acc, items) => acc.concat(...items), [])
+        );
+    }
   };
 };

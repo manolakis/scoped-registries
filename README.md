@@ -32,14 +32,14 @@
   - [ ] `getElementsByTagNameNS()`: Must transform the tag name to search by the scoped one.
   - [ ] `styles`: Needs more investigation about how to proceed.
 
-- [ ] `Element`
+- [X] `Element`
   - [X] `Element.prototype.scope: Document | ShadowRoot`: Elements have DOM creation APIs, like `innerHTML`, so they need a reference to their scope. Elements expose this with a scope property. One difference between this and `getRootNode()` is that the scope for an element can never change.
   - [X] `Element.prototype.attachShadow(init: ShadowRootInit)`: `ShadowRootInit` adds a new property, `customElements`, in its options argument which is a `CustomElementRegistry`.
   - [X] `innerHTML`
   - [X] `tagName`
   - [X] `querySelector()`: Must transform the tag selector to search by the scoped ones.
   - [X] `querySelectorAll()`: Must transform the tag selector to search by the scoped ones.
-  - [ ] `getElementsByTagName()`: Must transform the tag name to search by the scoped one.
-  - [ ] `getElementsByTagNameNS()`: Must transform the tag name to search by the scoped one.
+  - [X] `getElementsByTagName()`: Must transform the tag name to search by the scoped one.
+  - [X] `getElementsByTagNameNS()`: Must transform the tag name to search by the scoped one.
 
 - [X] Limit custom elements constructors by default to only looking up registrations from the global registry.

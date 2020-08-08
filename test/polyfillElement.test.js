@@ -153,4 +153,92 @@ describe('polyfillElement', () => {
       expect(items[1].tagName.toLowerCase()).to.be.equal(tagName);
     });
   });
+
+  describe('getElementsByTagName', () => {
+    it('should return all the elements that matches with a normal element tagName', async () => {
+      const registry = new CustomElementRegistry();
+      const shadowRoot = getScopedShadowRoot(registry);
+      const $div = shadowRoot.createElement('div');
+
+      $div.innerHTML = `
+        <div>
+          <span></span>
+          <span></span>
+        </div>
+      `;
+
+      const items = $div.getElementsByTagName('span');
+
+      expect(items.length).to.be.equal(2);
+      expect(items[0].tagName.toLowerCase()).to.be.equal('span');
+      expect(items[1].tagName.toLowerCase()).to.be.equal('span');
+    });
+
+    it('should return all the elements that matches with a custom element tagName', async () => {
+      const registry = new CustomElementRegistry();
+      const shadowRoot = getScopedShadowRoot(registry);
+      const $div = shadowRoot.createElement('div');
+      const tagName = getTestTagName();
+
+      $div.innerHTML = `
+        <div>
+          <${tagName}></${tagName}>
+          <${tagName}></${tagName}>
+        </div>
+      `;
+
+      const items = $div.getElementsByTagName(tagName);
+
+      expect(items.length).to.be.equal(2);
+      expect(items[0].tagName.toLowerCase()).to.be.equal(tagName);
+      expect(items[1].tagName.toLowerCase()).to.be.equal(tagName);
+    });
+  });
+
+  describe('getElementsByTagNameNS', () => {
+    it('should return all the elements that matches with a normal element tagName', async () => {
+      const registry = new CustomElementRegistry();
+      const shadowRoot = getScopedShadowRoot(registry);
+      const $div = shadowRoot.createElement('div');
+
+      $div.innerHTML = `
+        <div>
+          <span></span>
+          <span></span>
+        </div>
+      `;
+
+      const items = $div.getElementsByTagNameNS(
+        'http://www.w3.org/1999/xhtml',
+        'span'
+      );
+
+      expect(items.length).to.be.equal(2);
+      expect(items[0].tagName.toLowerCase()).to.be.equal('span');
+      expect(items[1].tagName.toLowerCase()).to.be.equal('span');
+    });
+
+    it('should return all the elements that matches with a custom element tagName', async () => {
+      const registry = new CustomElementRegistry();
+      const shadowRoot = getScopedShadowRoot(registry);
+      const $div = shadowRoot.createElement('div');
+      const tagName = getTestTagName();
+
+      $div.innerHTML = `
+        <div>
+          <${tagName}></${tagName}>
+          <${tagName}></${tagName}>
+        </div>
+      `;
+
+      const items = $div.getElementsByTagNameNS(
+        'http://www.w3.org/1999/xhtml',
+        tagName
+      );
+
+      expect(items.length).to.be.equal(2);
+      expect(items[0].tagName.toLowerCase()).to.be.equal(tagName);
+      expect(items[1].tagName.toLowerCase()).to.be.equal(tagName);
+    });
+  });
 });
