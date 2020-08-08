@@ -43,4 +43,17 @@ describe('polyfillElement', () => {
       );
     });
   });
+
+  describe('tagName', () => {
+    it('should return the unscoped custom element tagName', async () => {
+      const registry = new CustomElementRegistry();
+      const shadowRoot = getScopedShadowRoot(registry);
+      const tagName = getTestTagName();
+      shadowRoot.innerHTML = `<${tagName}></${tagName}>`;
+
+      const $el = shadowRoot.firstElementChild;
+
+      expect($el.tagName).to.be.equal(tagName.toUpperCase());
+    });
+  });
 });

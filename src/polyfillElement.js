@@ -1,3 +1,4 @@
+import { definitionsRegistry } from './definitionsRegistry.js';
 import { polyfillShadowRoot } from './polyfillShadowRoot.js';
 import { transform } from './transform.js';
 
@@ -34,7 +35,6 @@ const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
 
 const setScope = (node, scope) => {
   node.childNodes.forEach(child => setScope(child, scope));
-
   // eslint-disable-next-line no-param-reassign
   node.scope = scope;
 };
@@ -56,6 +56,31 @@ Object.defineProperty(Element.prototype, 'innerHTML', {
     }
 
     return $data;
+  },
+});
+
+const originalTagNameDescriptor = Object.getOwnPropertyDescriptor(
+  Element.prototype,
+  'tagName'
+);
+
+Object.defineProperty(Element.prototype, 'tagName', {
+  ...originalTagNameDescriptor,
+  // eslint-disable-next-line object-shorthand,func-names
+  get: function () {
+    const scope = getScope(this);
+    const registry = getRegistry(scope);
+    const $tagName = originalTagNameDescriptor.get.call(this);
+
+    if (registry !== window.customElements) {
+      const { originalTagName = $tagName } =
+        definitionsRegistry.findByTagName($tagName.toLowerCase(), registry) ||
+        {};
+
+      return originalTagName.toUpperCase();
+    }
+
+    return $tagName;
   },
 });
 
