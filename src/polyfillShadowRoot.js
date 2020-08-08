@@ -1,6 +1,7 @@
 /* eslint no-global-assign:0, no-param-reassign:0, class-methods-use-this:0 */
 import { definitionsRegistry } from './definitionsRegistry.js';
 import { transform } from './transform.js';
+import { cssTransform } from './cssTransform.js';
 
 const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
   ShadowRoot.prototype,
@@ -58,9 +59,14 @@ const isUpgraded = node =>
  * @param {CustomElementRegistry} registry
  * @return {ShadowRoot}
  */
-export const polyfillShadowRoot = (shadowRoot, registry) => {
+export const polyfillShadowRoot = (
+  shadowRoot,
+  registry = window.customElements
+) => {
   /** type {CustomElementRegistry} */
   shadowRoot.customElements = registry;
+  shadowRoot.__querySelector = shadowRoot.querySelector;
+  shadowRoot.__querySelectorAll = shadowRoot.querySelectorAll;
 
   /**
    * Creates an element using the CustomElementRegistry of the ShadowRoot.
@@ -198,6 +204,26 @@ export const polyfillShadowRoot = (shadowRoot, registry) => {
         node.dataset.tagName || node.tagName.toLowerCase()
       )
     );
+  };
+
+  /**
+   * Returns the first Element within the document that matches the specified selector, or group of selectors. If no
+   * matches are found, null is returned.
+   * @param {string} query
+   * @return {Element|null}
+   */
+  shadowRoot.querySelector = function querySelector(query) {
+    return this.__querySelector(cssTransform(query, this.customElements));
+  };
+
+  /**
+   * Returns a static (not live) NodeList representing a list of the document's elements that match the specified
+   * group of selectors.
+   * @param {string} query
+   * @return {Element[]}
+   */
+  shadowRoot.querySelectorAll = function querySelectorAll(query) {
+    return this.__querySelectorAll(cssTransform(query, this.customElements));
   };
 
   return shadowRoot;

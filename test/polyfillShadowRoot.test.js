@@ -245,5 +245,96 @@ describe('polyfillShadowRoot', () => {
         );
       });
     });
+
+    describe('querySelector', () => {
+      it('should be able to find a normal element with the global registry', async () => {
+        const shadowRoot = getScopedShadowRoot();
+        shadowRoot.innerHTML = `<div></div>`;
+
+        const $el = shadowRoot.querySelector('div');
+
+        expect($el).to.not.be.null;
+        expect($el.tagName.toLowerCase()).to.be.equal('div');
+      });
+
+      it('should be able to find a custom element in a shadow root with the global registry', async () => {
+        const shadowRoot = getScopedShadowRoot();
+        const tagName = getTestTagName();
+        shadowRoot.innerHTML = `<${tagName}></${tagName}>`;
+
+        const $el = shadowRoot.querySelector(tagName);
+
+        expect($el).to.not.be.null;
+        expect($el.tagName.toLowerCase()).to.be.equal(tagName);
+      });
+
+      it('should be able to find a custom element in a shadow root and a custom registry', async () => {
+        const registry = new CustomElementRegistry();
+        const shadowRoot = getScopedShadowRoot(registry);
+        const tagName = getTestTagName();
+        shadowRoot.innerHTML = `<div id="myDiv"><${tagName} class="sample"></${tagName}></div>`;
+
+        const $el = shadowRoot.querySelector(`#myDiv ${tagName}.sample`);
+
+        expect($el).to.not.be.null;
+        expect($el.tagName.toLowerCase()).to.be.equal(tagName);
+      });
+    });
+
+    describe('querySelectorAll', () => {
+      it('should be able to find a list of normal elements', async () => {
+        const shadowRoot = getScopedShadowRoot();
+
+        shadowRoot.innerHTML = `
+        <div>
+          <span></span>
+          <span></span>
+        </div>
+      `;
+
+        const items = shadowRoot.querySelectorAll('span');
+
+        expect(items.length).to.be.equal(2);
+        expect(items[0].tagName.toLowerCase()).to.be.equal('span');
+        expect(items[1].tagName.toLowerCase()).to.be.equal('span');
+      });
+
+      it('should be able to find a list of scoped elements with the global registry', async () => {
+        const shadowRoot = getScopedShadowRoot();
+        const tagName = getTestTagName();
+
+        shadowRoot.innerHTML = `
+        <div>
+          <${tagName}></${tagName}>
+          <${tagName}></${tagName}>
+        </div>
+      `;
+
+        const items = shadowRoot.querySelectorAll(tagName);
+
+        expect(items.length).to.be.equal(2);
+        expect(items[0].tagName.toLowerCase()).to.be.equal(tagName);
+        expect(items[1].tagName.toLowerCase()).to.be.equal(tagName);
+      });
+
+      it('should be able to find a list of custom elements with a custom registry', async () => {
+        const registry = new CustomElementRegistry();
+        const shadowRoot = getScopedShadowRoot(registry);
+        const tagName = getTestTagName();
+
+        shadowRoot.innerHTML = `
+        <div>
+          <${tagName}></${tagName}>
+          <${tagName}></${tagName}>
+        </div>
+      `;
+
+        const items = shadowRoot.querySelectorAll(tagName);
+
+        expect(items.length).to.be.equal(2);
+        expect(items[0].tagName.toLowerCase()).to.be.equal(tagName);
+        expect(items[1].tagName.toLowerCase()).to.be.equal(tagName);
+      });
+    });
   });
 });

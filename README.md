@@ -26,8 +26,8 @@
   - [X] `createElementNS()`: create new elements using the `CustomElementRegistry` of the `ShadowRoot`.
   - [X] `importNode()`: Imports a node into the document that owns the `ShadowRoot`, using the `CustomElementRegistry` of the `ShadowRoot`. This enables cloning a template into multiple scopes to use different custom element definitions.
   - [X] `innerHTML`
-  - [ ] `querySelector()`: Must transform the tag selector to search by the scoped ones.
-  - [ ] `querySelectorAll()`: Must transform the tag selector to search by the scoped ones.
+  - [X] `querySelector()`: Must transform the tag selector to search by the scoped ones.
+  - [X] `querySelectorAll()`: Must transform the tag selector to search by the scoped ones.
   - [ ] `getElementsByTagName()`: Must transform the tag name to search by the scoped one.
   - [ ] `getElementsByTagNameNS()`: Must transform the tag name to search by the scoped one.
   - [ ] `styles`: Needs more investigation about how to proceed.
