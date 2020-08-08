@@ -147,8 +147,7 @@ describe('polyfillCustomElementRegistry', () => {
 
         const $el = new NewElement();
 
-        expect($el.tagName.toLowerCase()).to.not.be.equal(tagName);
-        expect($el.tagName.toLowerCase().startsWith(tagName)).to.be.true;
+        expect($el.tagName.toLowerCase()).to.be.equal(tagName);
       });
     });
 

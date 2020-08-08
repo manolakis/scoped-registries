@@ -41,9 +41,7 @@ describe('polyfillShadowRoot', () => {
 
         const $el = shadowRoot.createElement(tagName);
 
-        expect($el.tagName.toLowerCase()).to.match(
-          new RegExp(`${tagName}-\\d{1,5}`)
-        );
+        expect($el.tagName.toLowerCase()).to.be.equal(tagName);
       });
 
       it('should create a regular element', async () => {

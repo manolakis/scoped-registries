@@ -69,19 +69,11 @@ Object.defineProperty(Element.prototype, 'tagName', {
   ...originalTagNameDescriptor,
   // eslint-disable-next-line object-shorthand,func-names
   get: function () {
-    const scope = getScope(this);
-    const registry = getRegistry(scope);
     const $tagName = originalTagNameDescriptor.get.call(this);
+    const { originalTagName = $tagName } =
+      definitionsRegistry.findByTagName($tagName.toLowerCase()) || {};
 
-    if (registry !== window.customElements) {
-      const { originalTagName = $tagName } =
-        definitionsRegistry.findByTagName($tagName.toLowerCase(), registry) ||
-        {};
-
-      return originalTagName.toUpperCase();
-    }
-
-    return $tagName;
+    return originalTagName.toUpperCase();
   },
 });
 
