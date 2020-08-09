@@ -1,5 +1,5 @@
 import { expect } from '@open-wc/testing';
-import { transform } from '../src/transform.js';
+import { htmlTransform } from '../src/htmlTransform.js';
 
 import '../index.js'; // loads the polyfill
 
@@ -55,7 +55,7 @@ describe('html', () => {
   ].forEach(({ input, output }, index) => {
     it(`should transform strings tags into the actual registered tags - ${index}`, () => {
       // @ts-ignore
-      expect(transform(input, registry)).to.match(new RegExp(output));
+      expect(htmlTransform(input, registry)).to.match(new RegExp(output));
     });
   });
 });

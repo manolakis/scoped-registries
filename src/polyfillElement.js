@@ -1,6 +1,6 @@
 import { definitionsRegistry } from './definitionsRegistry.js';
 import { polyfillShadowRoot } from './polyfillShadowRoot.js';
-import { transform } from './transform.js';
+import { htmlTransform } from './htmlTransform.js';
 import { cssTransform } from './cssTransform.js';
 import { HTMLCollection } from './HTMLCollection.js';
 
@@ -50,7 +50,7 @@ Object.defineProperty(Element.prototype, 'innerHTML', {
 
     const $data = originalInnerHTMLDescriptor.set.call(
       this,
-      transform(value, registry)
+      htmlTransform(value, registry)
     );
 
     if (scope !== document) {

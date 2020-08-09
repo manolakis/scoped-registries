@@ -96,7 +96,7 @@ const transformNode = (data, isClosingTag, registry) => {
  * @param {CustomElementRegistry} registry
  * @returns {string}
  */
-export const transform = (template, registry) => {
+export const htmlTransform = (template, registry) => {
   let acc = '';
   let start = searchStart(template);
   let end = 0;

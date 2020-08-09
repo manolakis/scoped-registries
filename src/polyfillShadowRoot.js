@@ -1,6 +1,6 @@
 /* eslint no-global-assign:0, no-param-reassign:0, class-methods-use-this:0 */
 import { definitionsRegistry } from './definitionsRegistry.js';
-import { transform } from './transform.js';
+import { htmlTransform } from './htmlTransform.js';
 import { cssTransform } from './cssTransform.js';
 
 const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
@@ -21,7 +21,7 @@ Object.defineProperty(ShadowRoot.prototype, 'innerHTML', {
 
     const $data = originalInnerHTMLDescriptor.set.call(
       this,
-      transform(value, registry)
+      htmlTransform(value, registry)
     );
 
     this.childNodes.forEach(child => setScope(child, this));
