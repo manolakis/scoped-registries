@@ -1,31 +1,12 @@
 /* eslint no-global-assign:0, class-methods-use-this:0 */
-import { OriginalCustomElementRegistry } from './constants.js';
 import { polyfillCustomElementRegistry } from './polyfillCustomElementRegistry.js';
 
 export class ScopedCustomElementRegistry {
   /**
    * @constructor
-   * @param {CustomElementRegistry} [parent]
-   * @param {Object<string, typeof HTMLElement>} [definitions]
    */
-  constructor({ parent, definitions = {} } = {}) {
-    if (
-      parent &&
-      !(
-        parent instanceof OriginalCustomElementRegistry ||
-        parent instanceof ScopedCustomElementRegistry
-      )
-    ) {
-      throw new Error('Parent must be a CustomElementRegistry instance');
-    }
-
+  constructor() {
     polyfillCustomElementRegistry(this);
-
-    this.parent = parent;
-
-    Object.keys(definitions).forEach(tagName =>
-      this.define(tagName, definitions[tagName])
-    );
   }
 
   /**

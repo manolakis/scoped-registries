@@ -84,7 +84,7 @@ const transformNode = (data, isClosingTag, registry) => {
     return `</${scopedTagName}`;
   }
 
-  attrs.splice(0, 0, scopedTagName, `data-tag-name="${tagName}"`);
+  attrs.splice(0, 0, scopedTagName);
 
   return `<${attrs.join(' ')}`;
 };
