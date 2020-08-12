@@ -5,7 +5,7 @@ import { getTestTagName, getTestElement } from './utils.js';
 import '../index.js'; // loads the polyfill
 
 describe('polyfillCustomElementRegistry', () => {
-  describe('Global Custom Element Registry', () => {
+  describe('global registry', () => {
     describe('define', () => {
       it('should return the same defined constructor', async () => {
         const { tagName, Element } = getTestElement();
@@ -81,35 +81,9 @@ describe('polyfillCustomElementRegistry', () => {
         expect(isFulfilled).to.be.true;
       });
     });
-
-    describe('getDefinitions', () => {
-      it('should return all the registry registrations', async () => {
-        const { tagName: tagName1, Element: Element1 } = getTestElement();
-        const { tagName: tagName2, Element: Element2 } = getTestElement();
-
-        customElements.define(tagName1, Element1);
-        customElements.define(tagName2, Element2);
-
-        const definitions = customElements.getDefinitions();
-
-        // as customElements is a global registry it probably contains much more defined elements, so for testing
-        // purposes we are going to delete those ones not created in this test case.
-        const allowedKeys = [tagName1, tagName2];
-        Object.keys(definitions).forEach(key => {
-          if (!allowedKeys.includes(key)) {
-            delete definitions[key];
-          }
-        });
-
-        expect(definitions).to.be.eql({
-          [tagName1]: Element1,
-          [tagName2]: Element2,
-        });
-      });
-    });
   });
 
-  describe('Scoped Custom Element Registry', () => {
+  describe('scoped registry', () => {
     it('should be constructable', async () => {
       const registry = new CustomElementRegistry();
 

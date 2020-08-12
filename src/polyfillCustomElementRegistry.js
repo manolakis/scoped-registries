@@ -100,22 +100,5 @@ export const polyfillCustomElementRegistry = that => {
       ? that.__whenDefined(name)
       : that.__whenDefined(definitionsRegistry.getTagName(name, that));
 
-  /**
-   * Returns all the registrations.
-   *
-   * @return {Object<string, typeof HTMLElement>}
-   */
-  that.getDefinitions = () => {
-    return definitionsRegistry
-      .findByRegistry(that)
-      .reduce((accumulator, { originalTagName, constructor }) => {
-        if (constructor) {
-          accumulator[originalTagName] = constructor;
-        }
-
-        return accumulator;
-      }, {});
-  };
-
   return that;
 };
