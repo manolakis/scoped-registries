@@ -65,6 +65,19 @@ const searchEnd = (template, fromIndex) => search(template, '>', fromIndex);
 const isCustomElement = data => data.includes('-'); // TODO it could be a better algorithm
 
 /**
+ * Get the scoped tagName for a registry from a tagName, that could be previously scoped.
+ * @param {string} tagName
+ * @param {CustomElementRegistry} registry
+ * @return {string}
+ */
+const getScopedTagName = (tagName, registry) => {
+  const { originalTagName = tagName } =
+    definitionsRegistry.findByTagName(tagName) || {};
+
+  return definitionsRegistry.getTagName(originalTagName, registry);
+};
+
+/**
  * Transforms a node into a scoped one if valid.
  * @param {string} data
  * @param {boolean} isClosingTag
@@ -78,7 +91,7 @@ const transformNode = (data, isClosingTag, registry) => {
     return data;
   }
 
-  const scopedTagName = definitionsRegistry.getTagName(tagName, registry);
+  const scopedTagName = getScopedTagName(tagName, registry);
 
   if (isClosingTag) {
     return `</${scopedTagName}`;
