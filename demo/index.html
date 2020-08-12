@@ -12,6 +12,7 @@
   <script type="module">
     // x-foo.js is an existing custom element module that registers a class
     // as 'x-foo' in the global registry.
+    // eslint-disable-next-line max-classes-per-file
     import { XFoo } from './XFoo.js';
 
     // Create a new registry that inherits from the global registry
@@ -28,7 +29,9 @@
         super();
         // Use the local registry when creating the ShadowRoot
         this.attachShadow({mode: 'open', customElements: myRegistry});
+      }
 
+      connectedCallback() {
         // Use the scoped element creation APIs to create elements:
         const myFoo = this.shadowRoot.createElement('my-foo');
         this.shadowRoot.appendChild(myFoo);

@@ -19,7 +19,6 @@ export class HTMLCollection {
 
   namedItem(name) {
     for (let index = 0; index < this.length; index += 1) {
-      console.log(this[index].name);
       if (
         this[index].id === name ||
         this[index].getAttribute('name') === name
