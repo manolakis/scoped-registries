@@ -110,22 +110,10 @@ describe('polyfillCustomElementRegistry', () => {
   });
 
   describe('Scoped Custom Element Registry', () => {
-    it('should be able to be instantiated', async () => {
+    it('should be constructable', async () => {
       const registry = new CustomElementRegistry();
 
       expect(registry).to.not.be.undefined;
-    });
-
-    it('should be able to be instantiated with a parent reference', async () => {
-      const registry = new CustomElementRegistry({ parent: customElements });
-      const registry2 = new CustomElementRegistry({ parent: registry });
-
-      expect(registry).to.not.be.undefined;
-      expect(registry2).to.not.be.undefined;
-    });
-
-    it('should throw an Error if parent is not an CustomElementRegistry instance', async () => {
-      expect(() => new CustomElementRegistry({ parent: {} })).to.throw();
     });
 
     describe('define', () => {
@@ -168,39 +156,6 @@ describe('polyfillCustomElementRegistry', () => {
 
         expect(registry.get(getTestTagName())).to.be.undefined;
       });
-
-      it('should return the closest constructor defined for a tag name in the chain of registries', async () => {
-        const { tagName: tagName1, Element: Element1 } = getTestElement();
-        const { tagName: tagName2, Element: Element2 } = getTestElement();
-        const registry = new CustomElementRegistry({
-          parent: customElements,
-          definitions: { [tagName1]: Element1 },
-        });
-        const registry2 = new CustomElementRegistry({
-          parent: registry,
-          definitions: { [tagName2]: Element2 },
-        });
-
-        expect(Object.getPrototypeOf(registry2.get(tagName1))).to.be.equal(
-          Element1
-        );
-        expect(Object.getPrototypeOf(registry2.get(tagName2))).to.be.equal(
-          Element2
-        );
-      });
-
-      it('should return undefined if there is no constructor defined for a tag name in the chain of registries', async () => {
-        const registry = new CustomElementRegistry({ parent: customElements });
-        const registry2 = new CustomElementRegistry({ parent: registry });
-
-        expect(registry2.get(getTestTagName())).to.be.undefined;
-      });
-    });
-
-    describe('getRegistry', () => {
-      it('should return the closest registry in which a tag name is defined', async () => {
-        // TODO
-      });
     });
 
     describe('whenDefined', () => {
@@ -239,46 +194,6 @@ describe('polyfillCustomElementRegistry', () => {
         await nextFrame();
 
         expect(isFulfilled).to.be.true;
-      });
-    });
-
-    describe('bulk definitions', () => {
-      it('should allow sugar for bulk definitions', async () => {
-        const { tagName: tagName1, Element: Element1 } = getTestElement();
-        const { tagName: tagName2, Element: Element2 } = getTestElement();
-        const registry = new CustomElementRegistry({
-          definitions: {
-            [tagName1]: Element1,
-            [tagName2]: Element2,
-          },
-        });
-
-        expect(Object.getPrototypeOf(registry.get(tagName1))).to.be.equal(
-          Element1
-        );
-        expect(Object.getPrototypeOf(registry.get(tagName2))).to.be.equal(
-          Element2
-        );
-      });
-    });
-
-    describe('getDefinitions', () => {
-      it('should return all the registry registrations', async () => {
-        const { tagName: tagName1, Element: Element1 } = getTestElement();
-        const { tagName: tagName2, Element: Element2 } = getTestElement();
-        const registry = new CustomElementRegistry({
-          definitions: {
-            [tagName1]: Element1,
-            [tagName2]: Element2,
-          },
-        });
-
-        const definitions = registry.getDefinitions();
-
-        expect(definitions).to.be.eql({
-          [tagName1]: registry.get(tagName1),
-          [tagName2]: registry.get(tagName2),
-        });
       });
     });
   });

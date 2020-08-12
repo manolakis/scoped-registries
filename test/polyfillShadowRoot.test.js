@@ -11,7 +11,7 @@ import {
 import '../index.js'; // loads the polyfill
 
 describe('polyfillShadowRoot', () => {
-  describe('with global registry', () => {
+  describe('global registry', () => {
     describe('createElement', () => {
       it('should create a scoped custom element', async () => {
         const tagName = getTestTagName();
@@ -20,6 +20,7 @@ describe('polyfillShadowRoot', () => {
         const $el = shadowRoot.createElement(tagName);
 
         expect($el.tagName.toLowerCase()).to.be.equal(tagName);
+        expect($el.outerHTML).to.equal(`<${tagName}></${tagName}>`);
       });
 
       it('should create a regular element', async () => {
@@ -29,11 +30,12 @@ describe('polyfillShadowRoot', () => {
         const $el = shadowRoot.createElement(tagName);
 
         expect($el.tagName.toLowerCase()).to.equal(tagName);
+        expect($el.outerHTML).to.equal(`<div></div>`);
       });
     });
   });
 
-  describe('with scoped registry', () => {
+  describe('scoped registry', () => {
     describe('createElement', () => {
       it('should create a scoped custom element', async () => {
         const tagName = getTestTagName();
@@ -42,6 +44,9 @@ describe('polyfillShadowRoot', () => {
         const $el = shadowRoot.createElement(tagName);
 
         expect($el.tagName.toLowerCase()).to.be.equal(tagName);
+        expect($el.outerHTML).to.match(
+          new RegExp(`<${tagName}-\\d{1,5}></${tagName}-\\d{1,5}>`)
+        );
       });
 
       it('should create a regular element', async () => {
@@ -51,6 +56,7 @@ describe('polyfillShadowRoot', () => {
         const $el = shadowRoot.createElement(tagName);
 
         expect($el.tagName.toLowerCase()).to.equal(tagName);
+        expect($el.outerHTML).to.be.equal('<div></div>');
       });
 
       it('should set the shadowRoot as the scope of regular elements', async () => {
@@ -61,186 +67,233 @@ describe('polyfillShadowRoot', () => {
 
         expect($el.scope).to.equal(shadowRoot);
       });
-
-      it('should create a scoped element in hierarchy', async () => {
-        const tagName = getTestTagName();
-        const firstRegistry = new CustomElementRegistry({
-          parent: customElements,
-        });
-        const secondRegistry = new CustomElementRegistry({
-          parent: firstRegistry,
-        });
-        const shadowRoot = getScopedShadowRoot(secondRegistry);
-
-        const Element = class extends HTMLElement {};
-        const Element2 = class extends HTMLElement {};
-        const Element3 = class extends HTMLElement {};
-
-        customElements.define(tagName, Element);
-        const el1 = shadowRoot.createElement(tagName);
-
-        firstRegistry.define(tagName, Element2);
-        const el2 = shadowRoot.createElement(tagName);
-
-        secondRegistry.define(tagName, Element3);
-        const el3 = shadowRoot.createElement(tagName);
-
-        expect(el1).to.be.instanceof(Element);
-        expect(el2).to.be.instanceof(Element2);
-        expect(el3).to.be.instanceof(Element3);
-      });
     });
 
     describe('importNode', () => {
-      it('should import a basic node with deep = false', async () => {
-        const shadowRoot = getScopedShadowRoot();
-        const $div = document.createElement('div');
+      describe('deep = false', () => {
+        it('should import a basic node', async () => {
+          const shadowRoot = getScopedShadowRoot();
+          const $div = document.createElement('div');
 
-        const $clone = shadowRoot.importNode($div, false);
+          const $clone = shadowRoot.importNode($div, false);
 
-        expect($clone.outerHTML).to.be.equal('<div></div>');
+          expect($clone.outerHTML).to.be.equal('<div></div>');
+        });
+
+        it('should import a basic template content', async () => {
+          const shadowRoot = getScopedShadowRoot();
+          const $template = createTemplateElement('<div></div>');
+
+          const $clone = shadowRoot.importNode($template.content, false);
+
+          expect($clone).to.be.instanceof(DocumentFragment);
+          expect($clone.childNodes.length).to.be.equal(0);
+        });
       });
 
-      it('should import a basic template with deep = false', async () => {
-        const shadowRoot = getScopedShadowRoot();
-        const $template = createTemplateElement('<div></div>');
+      describe('deep = true', () => {
+        it('should import a basic node', async () => {
+          const shadowRoot = await getScopedShadowRoot();
+          const $div = document.createElement('div');
 
-        const $clone = shadowRoot.importNode($template.content, false);
+          const $clone = shadowRoot.importNode($div, true);
 
-        expect($clone).to.be.instanceof(DocumentFragment);
-        expect($clone.innerHTML).to.be.undefined;
-      });
+          expect($clone.outerHTML).to.be.equal('<div></div>');
+        });
 
-      it('should import a basic node with deep = true', async () => {
-        const shadowRoot = await getScopedShadowRoot();
-        const $div = document.createElement('div');
+        it('should import a node tree', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const html = '<span>sample</span>';
+          const $div = wrapHTML(html);
 
-        const $clone = shadowRoot.importNode($div, true);
+          const $clone = shadowRoot.importNode($div, true);
 
-        expect($clone.outerHTML).to.be.equal('<div></div>');
-      });
+          expect($clone.innerHTML).to.be.equal(html);
+        });
 
-      it('should import a basic template with deep = true', async () => {
-        const shadowRoot = getScopedShadowRoot();
-        const $template = createTemplateElement('<div></div>');
+        it('should import a node tree with an upgraded custom element', async () => {
+          const { tagName, Element } = getTestElement();
+          customElements.define(tagName, Element);
 
-        const $clone = shadowRoot.importNode($template.content, true);
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $div = wrapHTML(
+            `<${tagName}><span>data</span></${tagName}>`,
+            document
+          );
 
-        expect($clone).to.be.instanceof(DocumentFragment);
-        expect($clone.firstElementChild.outerHTML).to.be.equal('<div></div>');
-      });
+          const $clone = shadowRoot.importNode($div, true);
 
-      it('should import a node tree with deep = true', async () => {
-        const registry = new CustomElementRegistry();
-        const shadowRoot = getScopedShadowRoot(registry);
-        const html = '<span>sample</span>';
-        const $div = wrapHTML(html);
+          expect($clone.innerHTML).to.be.equal(
+            `<${tagName}><span>data</span></${tagName}>`
+          );
+        });
 
-        const $clone = shadowRoot.importNode($div, true);
+        it('should import a node tree with an upgraded custom element from another shadowRoot', async () => {
+          const { tagName, Element } = getTestElement();
+          const registry1 = new CustomElementRegistry();
+          registry1.define(tagName, Element);
+          const shadowRoot1 = getScopedShadowRoot(registry1);
+          const $div = wrapHTML(
+            `<${tagName}><span>data</span></${tagName}>`,
+            shadowRoot1
+          );
+          const registry2 = new CustomElementRegistry();
+          const shadowRoot2 = getScopedShadowRoot(registry2);
 
-        expect($clone.innerHTML).to.be.equal(html);
-      });
+          const $clone = shadowRoot2.importNode($div, true);
 
-      it('should import a template content with deep = true', async () => {
-        const shadowRoot = getScopedShadowRoot();
-        const html = '<div><span>sample</span></div>';
-        const $template = createTemplateElement(html);
+          expect($clone.innerHTML).to.be.equal($div.innerHTML);
+        });
 
-        const $clone = shadowRoot.importNode($template.content, true);
+        it('should import a node tree with a non upgraded custom element', async () => {
+          const tagName = getTestTagName();
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $div = wrapHTML(`<${tagName}><span>data</span></${tagName}>`);
 
-        expect($clone).to.be.instanceof(DocumentFragment);
-        expect($clone.firstElementChild.outerHTML).to.be.equal(html);
-      });
+          const $clone = shadowRoot.importNode($div, true);
 
-      it('should import a node tree with an upgraded custom element with deep  = true', async () => {
-        const { tagName, Element } = getTestElement();
-        const registry = new CustomElementRegistry();
-        const shadowRoot = getScopedShadowRoot(registry);
-        customElements.define(tagName, Element);
-        const $div = wrapHTML(`<${tagName}><span>data</span></${tagName}>`);
+          expect($clone.innerHTML).to.match(
+            new RegExp(
+              `<${tagName}-\\d{1,5}><span>data</span></${tagName}-\\d{1,5}>`
+            )
+          );
+        });
 
-        const $clone = shadowRoot.importNode($div, true);
+        it('should import a node tree with an non upgraded custom element from another shadowRoot', async () => {
+          const { tagName } = getTestElement();
+          const registry1 = new CustomElementRegistry();
+          const shadowRoot1 = getScopedShadowRoot(registry1);
+          const $div = wrapHTML(
+            `<${tagName}><span>data</span></${tagName}>`,
+            shadowRoot1
+          );
+          const registry2 = new CustomElementRegistry();
+          const shadowRoot2 = getScopedShadowRoot(registry2);
 
-        expect($clone.innerHTML).to.be.equal(
-          `<${tagName}><span>data</span></${tagName}>`
-        );
-      });
+          const $clone = shadowRoot2.importNode($div, true);
 
-      it('should import a template with an upgraded custom element with deep = true', async () => {
-        const { tagName, Element } = getTestElement();
+          expect($div.firstElementChild.scope).to.be.equal(shadowRoot1);
+          expect($clone.firstElementChild.scope).to.be.equal(shadowRoot2);
+          expect($clone.innerHTML).to.not.be.equal($div.innerHTML);
+          expect($clone.innerHTML).to.match(
+            new RegExp(
+              `<${tagName}-\\d{1,5}><span>data</span></${tagName}-\\d{1,5}>`
+            )
+          );
+        });
 
-        const registry = new CustomElementRegistry({ parent: customElements });
-        const shadowRoot = getScopedShadowRoot(registry);
-        customElements.define(tagName, Element);
-        const $template = createTemplateElement(
-          `<${tagName}><span>data</span></${tagName}>`
-        );
+        it('should import a basic template', async () => {
+          const shadowRoot = getScopedShadowRoot();
+          const $template = createTemplateElement('<div></div>');
 
-        const $clone = shadowRoot.importNode($template.content, true);
+          const $clone = shadowRoot.importNode($template.content, true);
 
-        expect($clone).to.be.instanceof(DocumentFragment);
-        expect($clone.firstElementChild.outerHTML).to.be.equal(
-          `<${tagName}><span>data</span></${tagName}>`
-        );
-      });
+          expect($clone).to.be.instanceof(DocumentFragment);
+          expect($clone.childNodes.length).to.be.equal(1);
+          expect($clone.firstElementChild.outerHTML).to.be.equal('<div></div>');
+        });
 
-      it('should import a node tree with a non upgraded custom element with deep = true', async () => {
-        const tagName = getTestTagName();
-        const registry = new CustomElementRegistry();
-        const shadowRoot = getScopedShadowRoot(registry);
-        const $div = wrapHTML(`<${tagName}><span>data</span></${tagName}>`);
+        it('should import a complex template', async () => {
+          const shadowRoot = getScopedShadowRoot();
+          const html = '<div><span>sample</span></div><span></span>';
+          const $template = createTemplateElement(html);
 
-        const $clone = shadowRoot.importNode($div, true);
+          const $clone = shadowRoot.importNode($template.content, true);
 
-        expect($clone.innerHTML).to.match(
-          new RegExp(
-            `<${tagName}-\\d{1,5} data-tag-name="${tagName}"><span>data</span></${tagName}-\\d{1,5}>`
-          )
-        );
-      });
+          expect($clone).to.be.instanceof(DocumentFragment);
+          expect($clone.childNodes.length).to.be.equal(2);
+          expect($clone.firstElementChild.outerHTML).to.be.equal(
+            '<div><span>sample</span></div>'
+          );
+        });
 
-      it('should import a template with a non upgraded custom element with deep = true', async () => {
-        const { tagName, Element } = getTestElement();
-        const registry = new CustomElementRegistry();
-        const shadowRoot = getScopedShadowRoot(registry);
-        customElements.define(tagName, Element);
-        const $template = createTemplateElement(
-          `<${tagName}><span>data</span></${tagName}>`
-        );
+        it('should import a template with an upgraded custom element', async () => {
+          const { tagName, Element } = getTestElement();
+          customElements.define(tagName, Element);
 
-        const $clone = shadowRoot.importNode($template.content, true);
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $template = createTemplateElement(
+            `<${tagName}><span>data</span></${tagName}>`
+          );
 
-        expect($clone).to.be.instanceof(DocumentFragment);
-        expect($clone.firstElementChild.outerHTML).to.match(
-          new RegExp(
-            `<${tagName}-\\d{1,5} data-tag-name="${tagName}"><span>data</span></${tagName}-\\d{1,5}>`
-          )
-        );
+          const $clone = shadowRoot.importNode($template.content, true);
+
+          expect($clone).to.be.instanceof(DocumentFragment);
+          expect($clone.childNodes.length).to.be.equal(1);
+          expect($clone.firstElementChild.outerHTML).to.match(
+            new RegExp(
+              `<${tagName}-\\d{1,5}><span>data</span></${tagName}-\\d{1,5}>`
+            )
+          );
+        });
+
+        it('should import a template with a non upgraded custom element', async () => {
+          const { tagName } = getTestElement();
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $template = createTemplateElement(
+            `<${tagName}><span>data</span></${tagName}>`
+          );
+
+          const $clone = shadowRoot.importNode($template.content, true);
+
+          expect($clone).to.be.instanceof(DocumentFragment);
+          expect($clone.childNodes.length).to.be.equal(1);
+          expect($clone.firstElementChild.outerHTML).to.match(
+            new RegExp(
+              `<${tagName}-\\d{1,5}><span>data</span></${tagName}-\\d{1,5}>`
+            )
+          );
+        });
       });
     });
 
     describe('innerHTML', async () => {
-      it('should not scope the custom elements if is using the global registry', async () => {
-        const shadowRoot = getScopedShadowRoot();
+      describe('global registry', () => {
+        it('should not scope the custom elements', async () => {
+          const shadowRoot = getScopedShadowRoot();
 
-        shadowRoot.innerHTML = '<my-tag><span>data</span></my-tag>';
+          shadowRoot.innerHTML = '<my-tag><span>data</span></my-tag>';
 
-        expect(shadowRoot.innerHTML).to.equal(
-          '<my-tag><span>data</span></my-tag>'
-        );
+          expect(shadowRoot.innerHTML).to.equal(
+            '<my-tag><span>data</span></my-tag>'
+          );
+        });
       });
 
-      it('should scope the custom elements if is using a scoped registry', async () => {
-        const registry = new CustomElementRegistry();
-        const shadowRoot = getScopedShadowRoot(registry);
+      describe('scoped registry', () => {
+        it('should scope the custom elements', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
 
-        shadowRoot.innerHTML = '<my-tag><span>data</span></my-tag>';
+          shadowRoot.innerHTML = '<my-tag><span>data</span></my-tag>';
 
-        expect(shadowRoot.innerHTML).to.match(
-          new RegExp(
-            `<my-tag-\\d{1,5} data-tag-name="my-tag"><span>data</span></my-tag-\\d{1,5}>`
-          )
-        );
+          expect(shadowRoot.innerHTML).to.match(
+            new RegExp(`<my-tag-\\d{1,5}><span>data</span></my-tag-\\d{1,5}>`)
+          );
+        });
+
+        it('should scope scoped elements from another shadow root', async () => {
+          const registry1 = new CustomElementRegistry();
+          const shadowRoot1 = getScopedShadowRoot(registry1);
+          shadowRoot1.innerHTML = '<my-tag><span>data</span></my-tag>';
+          const registry2 = new CustomElementRegistry();
+          const shadowRoot2 = getScopedShadowRoot(registry2);
+
+          shadowRoot2.innerHTML = shadowRoot1.innerHTML;
+
+          expect(shadowRoot1.innerHTML).to.match(
+            new RegExp(`<my-tag-\\d{1,5}><span>data</span></my-tag-\\d{1,5}>`)
+          );
+          expect(shadowRoot2.innerHTML).to.match(
+            new RegExp(`<my-tag-\\d{1,5}><span>data</span></my-tag-\\d{1,5}>`)
+          );
+          expect(shadowRoot1.innerHTML).to.not.be.equal(shadowRoot2.innerHTML);
+        });
       });
     });
 

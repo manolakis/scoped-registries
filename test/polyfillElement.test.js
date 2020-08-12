@@ -37,9 +37,7 @@ describe('polyfillElement', () => {
       $div.innerHTML = '<my-tag><span>data</span></my-tag>';
 
       expect($div.innerHTML).to.match(
-        new RegExp(
-          `<my-tag-\\d{1,5} data-tag-name="my-tag"><span>data</span></my-tag-\\d{1,5}>`
-        )
+        new RegExp(`<my-tag-\\d{1,5}><span>data</span></my-tag-\\d{1,5}>`)
       );
     });
   });
