@@ -23,7 +23,9 @@ export const getTestElement = () => ({
  * @param {CustomElementRegistry} customElementRegistry
  * @return {ShadowRoot}
  */
-export const getScopedShadowRoot = customElementRegistry => {
+export const getScopedShadowRoot = (
+  customElementRegistry = window.customElements
+) => {
   const tagName = getTestTagName();
   const Element = class extends HTMLElement {
     constructor() {
@@ -33,10 +35,7 @@ export const getScopedShadowRoot = customElementRegistry => {
         mode: 'open',
       };
 
-      if (
-        !customElementRegistry ||
-        customElementRegistry !== window.customElements
-      ) {
+      if (customElementRegistry !== window.customElements) {
         initOptions.customElements = customElementRegistry;
       }
 

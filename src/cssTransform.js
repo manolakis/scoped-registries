@@ -19,6 +19,7 @@ const TokenType = {
   PSEUDO_CLASS: 4,
   ATTRIBUTE: 5,
   SINGLE: 6,
+  BLOCK: 7,
 };
 
 /**
@@ -40,9 +41,28 @@ const getType = char => {
       return TokenType.ID;
     case '[':
       return TokenType.ATTRIBUTE;
+    case '{':
+      return TokenType.BLOCK;
     default:
       return TokenType.CHAR;
   }
+};
+
+/**
+ * Obtains the proper tagName for the specified registry.
+ *
+ * @param {string} token
+ * @param {CustomElementRegistry} registry
+ * @return {string}
+ */
+const getTagName = (token, registry) => {
+  const { originalTagName } = definitionsRegistry.findByTagName(token) || {};
+
+  if (originalTagName) {
+    return definitionsRegistry.getTagName(originalTagName, registry);
+  }
+
+  return definitionsRegistry.getTagName(token, registry);
 };
 
 /**
@@ -67,7 +87,7 @@ const elementExtractor = (query, start, registry) => {
   let token = query.substring(start, index);
 
   if (isCustomElement) {
-    token = definitionsRegistry.getTagName(token, registry);
+    token = getTagName(token, registry);
   }
 
   return { token, index };
@@ -110,17 +130,17 @@ const unscopedWordExtractor = (query, start) => {
 };
 
 /**
- * Obtains an attribute selector from the selector's string.
- * @param {string} query
- * @param {number} start
- * @return {{index: number, token: string}}
+ * Extracts a block of text.
+ *
+ * @param {string} endCharacter - character that determines the end of the text block
+ * @return {function(string, number): {index: number, token: string}}
  */
-const attributeExtractor = (query, start) => {
+const blockExtractor = endCharacter => (query, start) => {
   let index = start;
 
   do {
     index += 1;
-  } while (index < query.length && query[index] !== ']');
+  } while (index < query.length && query[index] !== endCharacter);
 
   return { token: query.substring(start, index), index };
 };
@@ -151,7 +171,10 @@ export const cssTransform = (cssText, registry = window.customElements) => {
         extractor = unscopedWordExtractor;
         break;
       case TokenType.ATTRIBUTE:
-        extractor = attributeExtractor;
+        extractor = blockExtractor(']');
+        break;
+      case TokenType.BLOCK:
+        extractor = blockExtractor('}');
         break;
       default:
         extractor = elementExtractor;

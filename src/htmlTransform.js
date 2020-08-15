@@ -1,4 +1,5 @@
 import { definitionsRegistry } from './definitionsRegistry.js';
+import { cssTransform } from './cssTransform.js';
 
 /**
  * Characters used to open a string
@@ -114,14 +115,21 @@ export const htmlTransform = (template, registry) => {
   let start = searchStart(template);
   let end = 0;
   let isClosingTag = false;
+  let isStyle = false;
+  let content;
+  let tag;
 
   while (start !== -1) {
-    acc += template.slice(end, start);
+    content = template.slice(end, start);
+    acc += isStyle ? cssTransform(content, registry) : content;
+    isStyle = false;
 
     isClosingTag = template[start + 1] === '/';
     end = searchEnd(template, start + 1);
 
-    acc += transformNode(template.slice(start, end), isClosingTag, registry);
+    tag = transformNode(template.slice(start, end), isClosingTag, registry);
+    acc += tag;
+    isStyle = tag.toLowerCase().startsWith('<style');
 
     start = searchStart(template, end + 1);
   }

@@ -154,6 +154,18 @@ export const polyfillShadowRoot = (
   shadowRoot.__transformCustomElements = function __transformCustomElements(
     node
   ) {
+    if (node.tagName === 'STYLE') {
+      const style = document.createElement('STYLE');
+
+      style.appendChild(
+        document.createTextNode(
+          cssTransform(node.firstChild.textContent, registry)
+        )
+      );
+
+      return style;
+    }
+
     node.childNodes.forEach(childNode => {
       const transformedNode = this.__transformCustomElements(childNode);
 
@@ -197,13 +209,7 @@ export const polyfillShadowRoot = (
    * @private
    */
   shadowRoot.__shouldScope = function __shouldScope(node) {
-    return (
-      isCustomElementNode(node) &&
-      !isUpgraded(node) &&
-      !this.customElements.get(
-        node.dataset.tagName || node.tagName.toLowerCase()
-      )
-    );
+    return isCustomElementNode(node) && !isUpgraded(node);
   };
 
   /**

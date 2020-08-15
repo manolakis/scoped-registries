@@ -81,6 +81,10 @@ const createTestData = (...items) =>
       [`${name}:indeterminate`, `${result}:indeterminate`],
       [`${name}:has(${name})`, `${result}:has\\(${result}\\)`],
       [`${name} || ${name}`, `${result} \\|\\| ${result}`],
+      [
+        `${name}:nth-child(2) { ${name} }`,
+        `${result}:nth-child\\(2\\) { ${name} }`,
+      ],
     ])
     .reduce((acc, arr) => acc.concat(arr));
 
