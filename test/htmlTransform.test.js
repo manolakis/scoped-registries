@@ -51,6 +51,10 @@ describe('html', () => {
       output:
         '<mandalore-planet-\\d{1,5} class="sample" data-test=\'<my-component>\'></mandalore-planet-\\d{1,5}>',
     },
+    {
+      input: '<style> my-item { color: red; } </style>',
+      output: '<style> my-item-\\d{1,5} { color: red; } </style>',
+    },
   ].forEach(({ input, output }, index) => {
     it(`should transform strings tags into the actual registered tags - ${index}`, () => {
       // @ts-ignore

@@ -1,49 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Scoped Custom Element Registries</title>
-    <script type="module" src="../index.js"></script>
+  <meta charset="UTF-8">
+  <title>Scoped Custom Element Registries</title>
+  <script type="module" src="../index.js"></script>
 </head>
 <body>
 
-  <my-element></my-element>
+<template>
+  <style>
+    my-el {
+      color: red;
+    }
+    span { color: blue; }
+  </style>
+  <my-el></my-el>
+  <span>sample</span>
+</template>
 
-  <script type="module">
-    // x-foo.js is an existing custom element module that registers a class
-    // as 'x-foo' in the global registry.
-    // eslint-disable-next-line max-classes-per-file
-    import { XFoo } from './XFoo.js';
+<my-element1></my-element1>
+<my-element2></my-element2>
 
-    // Create a new registry that inherits from the global registry
-    const myRegistry = new CustomElementRegistry(window.customElements);
+<script type="module">
+  // eslint-disable-next-line max-classes-per-file
+  import { Foo } from './Foo.js';
+  import { Bar } from './Bar.js';
 
-    // Define a trivial subclass of XFoo so that we can register it ourselves
-    class MyFoo extends XFoo {}
+  const registry1 = new CustomElementRegistry();
+  const registry2 = new CustomElementRegistry();
 
-    // Register it as `my-foo` locally.
-    myRegistry.define('my-foo', MyFoo);
+  registry1.define('my-el', Foo);
+  registry2.define('my-el', Bar);
 
-    class MyElement extends HTMLElement {
+  const createElement = registry =>
+    class extends HTMLElement {
       constructor() {
         super();
-        // Use the local registry when creating the ShadowRoot
-        this.attachShadow({mode: 'open', customElements: myRegistry});
+
+        this.attachShadow({ mode: 'open', customElements: registry });
       }
 
       connectedCallback() {
         // Use the scoped element creation APIs to create elements:
-        const myFoo = this.shadowRoot.createElement('my-foo');
-        this.shadowRoot.appendChild(myFoo);
+        const $template = document.querySelector('template');
+        const $clone = this.shadowRoot.importNode($template.content, true);
 
-        // myFoo is now associated with the scope of `this.shadowRoot`, and registry
-        // of `myRegistry`. When it creates new DOM, is uses `myRegistry`:
-        myFoo.innerHTML = `<my-bar></my-bar>`;
+        this.shadowRoot.appendChild($clone);
       }
     }
 
-    customElements.define('my-element', MyElement);
-  </script>
+  customElements.define('my-element1', createElement(registry1));
+  customElements.define('my-element2', createElement(registry2));
+</script>
 
 
 </body>

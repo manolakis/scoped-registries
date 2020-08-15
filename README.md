@@ -23,7 +23,9 @@
   - [X] `innerHTML`
   - [X] `querySelector()`: Must transform the tag selector to search by the scoped ones.
   - [X] `querySelectorAll()`: Must transform the tag selector to search by the scoped ones.
-  - [ ] `styles`: Needs more investigation about how to proceed.
+  - [ ] Styles
+    - [X] Styles inside the `style` tag name
+    - [ ] Styles using `CSSStyleSheet`
 
 - [X] `Element`
   - [X] `Element.prototype.scope: Document | ShadowRoot`: Elements have DOM creation APIs, like `innerHTML`, so they need a reference to their scope. Elements expose this with a scope property. One difference between this and `getRootNode()` is that the scope for an element can never change.
