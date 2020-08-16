@@ -6,7 +6,7 @@ import { supportsAdoptingStyleSheets } from './constants.js';
 
 const setScope = (node, scope) => {
   node.childNodes.forEach(child => setScope(child, scope));
-  node.scope = scope;
+  node.__scope = scope;
 };
 
 /**
@@ -117,7 +117,7 @@ export const polyfillShadowRoot = (
     if (!isCustomElement(tagName)) {
       const $el = document.createElement(tagName, options);
 
-      $el.scope = shadowRoot;
+      $el.__scope = shadowRoot;
 
       return $el;
     }
@@ -129,7 +129,7 @@ export const polyfillShadowRoot = (
     );
 
     if (!scope.__isRoot()) {
-      element.scope = scope;
+      element.__scope = scope;
     }
 
     return element;
@@ -158,7 +158,7 @@ export const polyfillShadowRoot = (
     );
 
     if (!scope.__isRoot()) {
-      element.scope = scope;
+      element.__scope = scope;
     }
 
     return element;

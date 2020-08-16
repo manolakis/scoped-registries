@@ -1,3 +1,4 @@
+/* eslint object-shorthand:0 */
 import { definitionsRegistry } from './definitionsRegistry.js';
 import { polyfillShadowRoot } from './polyfillShadowRoot.js';
 import { htmlTransform } from './htmlTransform.js';
@@ -38,12 +39,11 @@ const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
 const setScope = (node, scope) => {
   node.childNodes.forEach(child => setScope(child, scope));
   // eslint-disable-next-line no-param-reassign
-  node.scope = scope;
+  node.__scope = scope;
 };
 
 Object.defineProperty(Element.prototype, 'innerHTML', {
   ...originalInnerHTMLDescriptor,
-  // eslint-disable-next-line object-shorthand,func-names
   set: function (value) {
     const scope = getScope(this);
     const registry = getRegistry(scope);
@@ -68,13 +68,21 @@ const originalTagNameDescriptor = Object.getOwnPropertyDescriptor(
 
 Object.defineProperty(Element.prototype, 'tagName', {
   ...originalTagNameDescriptor,
-  // eslint-disable-next-line object-shorthand,func-names
   get: function () {
     const $tagName = originalTagNameDescriptor.get.call(this);
     const { originalTagName = $tagName } =
       definitionsRegistry.findByTagName($tagName.toLowerCase()) || {};
 
     return originalTagName.toUpperCase();
+  },
+});
+
+Object.defineProperty(Element.prototype, 'scope', {
+  get: function () {
+    return this.__scope || document;
+  },
+  set: function () {
+    throw new Error("'scope' is a readonly property");
   },
 });
 

@@ -239,4 +239,27 @@ describe('polyfillElement', () => {
       expect(items[1].tagName.toLowerCase()).to.be.equal(tagName);
     });
   });
+
+  describe('scope', () => {
+    it('should be the document in elements created by the document', async () => {
+      const $div = document.createElement('div');
+
+      expect($div.scope).to.be.equal(document);
+    });
+
+    it('should be the shadowRoot in elements created by a shadowRoot', async () => {
+      const shadowRoot = getScopedShadowRoot();
+      const $div = shadowRoot.createElement('div');
+
+      expect($div.scope).to.be.equal(shadowRoot);
+    });
+
+    it('should be the shadowRoot if `innerHTML` is used in elements created by a shadowRoot', async () => {
+      const shadowRoot = getScopedShadowRoot();
+      const $div = shadowRoot.createElement('div');
+      $div.innerHTML = '<span>Hello</span>';
+
+      expect($div.firstElementChild.scope).to.be.equal(shadowRoot);
+    });
+  });
 });
