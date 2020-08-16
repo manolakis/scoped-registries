@@ -2,33 +2,12 @@
 import { definitionsRegistry } from './definitionsRegistry.js';
 import { htmlTransform } from './htmlTransform.js';
 import { cssTransform } from './cssTransform.js';
-
-const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
-  ShadowRoot.prototype,
-  'innerHTML'
-);
+import { supportsAdoptingStyleSheets } from './constants.js';
 
 const setScope = (node, scope) => {
   node.childNodes.forEach(child => setScope(child, scope));
   node.scope = scope;
 };
-
-Object.defineProperty(ShadowRoot.prototype, 'innerHTML', {
-  ...originalInnerHTMLDescriptor,
-  // eslint-disable-next-line object-shorthand,func-names
-  set: function (value) {
-    const registry = this.customElements || window.customElements;
-
-    const $data = originalInnerHTMLDescriptor.set.call(
-      this,
-      htmlTransform(value, registry)
-    );
-
-    this.childNodes.forEach(child => setScope(child, this));
-
-    return $data;
-  },
-});
 
 /**
  * Checks if is a custom element tag name.
@@ -52,6 +31,67 @@ const isCustomElementNode = node =>
  */
 const isUpgraded = node =>
   Object.getPrototypeOf(node).constructor !== HTMLElement;
+
+/**
+ * Original `innerHTML` descriptor.
+ * @type {PropertyDescriptor}
+ */
+const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
+  ShadowRoot.prototype,
+  'innerHTML'
+);
+
+/**
+ * Overrides the innerHTML descriptor by the polyfilled one.
+ */
+Object.defineProperty(ShadowRoot.prototype, 'innerHTML', {
+  ...originalInnerHTMLDescriptor,
+  // eslint-disable-next-line object-shorthand,func-names
+  set: function (value) {
+    const registry = this.customElements || window.customElements;
+
+    const $data = originalInnerHTMLDescriptor.set.call(
+      this,
+      htmlTransform(value, registry)
+    );
+
+    this.childNodes.forEach(child => setScope(child, this));
+
+    return $data;
+  },
+});
+
+if (supportsAdoptingStyleSheets) {
+  const originalAdoptedStyleSheetsDescriptor = Object.getOwnPropertyDescriptor(
+    ShadowRoot.prototype,
+    'adoptedStyleSheets'
+  );
+
+  Object.defineProperty(ShadowRoot.prototype, 'adoptedStyleSheets', {
+    ...originalAdoptedStyleSheetsDescriptor,
+    // eslint-disable-next-line object-shorthand,func-names
+    set: function (styleSheets) {
+      const registry = this.customElements || window.customElements;
+
+      return originalAdoptedStyleSheetsDescriptor.set.call(
+        this,
+        styleSheets.map(styleSheet => {
+          const scopedStyleSheet = new CSSStyleSheet();
+
+          for (const rule of styleSheet.cssRules) {
+            scopedStyleSheet.insertRule(
+              `${cssTransform(rule.selectorText, registry)} { ${
+                rule.style.cssText
+              } }`
+            );
+          }
+
+          return scopedStyleSheet;
+        })
+      );
+    },
+  });
+}
 
 /**
  * Enhances a ShadowRoot to allow scoped elements.

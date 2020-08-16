@@ -18,9 +18,6 @@
   <span>sample</span>
 </template>
 
-<my-element1></my-element1>
-<my-element2></my-element2>
-
 <script type="module">
   // eslint-disable-next-line max-classes-per-file
   import { Foo } from './Foo.js';
@@ -46,6 +43,11 @@
         const $clone = this.shadowRoot.importNode($template.content, true);
 
         this.shadowRoot.appendChild($clone);
+
+        const css = new CSSStyleSheet();
+        css.replaceSync('my-el { margin: 10px; }');
+
+        this.shadowRoot.adoptedStyleSheets = [css];
       }
     }
 

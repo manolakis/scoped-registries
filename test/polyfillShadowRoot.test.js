@@ -7,8 +7,9 @@ import {
   createTemplateElement,
   wrapHTML,
 } from './utils.js';
+import { supportsAdoptingStyleSheets } from '../src/constants.js'; // loads the polyfill
 
-import '../index.js'; // loads the polyfill
+import '../index.js';
 
 describe('polyfillShadowRoot', () => {
   describe('DOM', () => {
@@ -508,5 +509,22 @@ describe('polyfillShadowRoot', () => {
         );
       });
     });
+
+    if (supportsAdoptingStyleSheets) {
+      describe('CSSStyleSheet', () => {
+        it('should scope the adopted style sheets', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const styleSheet = new CSSStyleSheet();
+          styleSheet.replaceSync('my-tag { color: red; }');
+
+          shadowRoot.adoptedStyleSheets = [styleSheet];
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.match(
+            new RegExp(`my-tag-\\d{1,5} { color: red; }`)
+          );
+        });
+      });
+    }
   });
 });
