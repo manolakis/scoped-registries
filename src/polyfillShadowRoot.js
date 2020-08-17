@@ -107,6 +107,8 @@ export const polyfillShadowRoot = (
   shadowRoot.customElements = registry;
   shadowRoot.__querySelector = shadowRoot.querySelector;
   shadowRoot.__querySelectorAll = shadowRoot.querySelectorAll;
+  shadowRoot.__appendChild = shadowRoot.appendChild;
+  shadowRoot.__insertBefore = shadowRoot.insertBefore;
 
   /**
    * Creates an element using the CustomElementRegistry of the ShadowRoot.
@@ -270,6 +272,26 @@ export const polyfillShadowRoot = (
    */
   shadowRoot.querySelectorAll = function querySelectorAll(query) {
     return this.__querySelectorAll(cssTransform(query, this.customElements));
+  };
+
+  shadowRoot.appendChild = function appendChild(child) {
+    const transformedNode = this.__transformCustomElements(child);
+
+    if (child.parentNode) {
+      child.parentNode.removeChild(child);
+    }
+
+    return this.__appendChild(transformedNode);
+  };
+
+  shadowRoot.insertBefore = function insertBefore(newNode, referenceNode) {
+    const transformedNode = this.__transformCustomElements(newNode);
+
+    if (newNode.parentNode) {
+      newNode.parentNode.removeChild(newNode);
+    }
+
+    return this.__insertBefore(transformedNode, referenceNode);
   };
 
   return shadowRoot;

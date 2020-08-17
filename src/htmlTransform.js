@@ -32,7 +32,10 @@ const search = (template, value, fromIndex) => {
     if (isOpeningString(template[index])) {
       inString = !inString;
     } else if (!inString && template[index] === value) {
-      return index;
+      // avoids the html comments
+      if (value === '>' || template[index + 1] !== '!') {
+        return index;
+      }
     }
 
     index += 1;

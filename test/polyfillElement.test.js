@@ -1,5 +1,10 @@
 import { expect } from '@open-wc/testing';
-import { getScopedShadowRoot, getTestTagName } from './utils.js';
+import {
+  getScopedShadowRoot,
+  getTestElement,
+  getTestTagName,
+  wrapHTML,
+} from './utils.js';
 
 import '../index.js'; // loads the polyfill
 
@@ -260,6 +265,137 @@ describe('polyfillElement', () => {
       $div.innerHTML = '<span>Hello</span>';
 
       expect($div.firstElementChild.scope).to.be.equal(shadowRoot);
+    });
+  });
+
+  describe('appendChild', () => {
+    describe('document scoped', () => {
+      it('should not scope custom elements', async () => {
+        const $div = document.createElement('div');
+        const $html = wrapHTML(`<my-elem></my-elem>`);
+
+        $div.appendChild($html);
+
+        const [myElem] = $div.firstElementChild.children;
+
+        expect(myElem.outerHTML).to.be.equal('<my-elem></my-elem>');
+      });
+    });
+
+    describe('shadowRoot scoped', () => {
+      describe('with global registry', () => {
+        it('should not scope custom elements', async () => {
+          const shadowRoot = getScopedShadowRoot();
+          const $div = shadowRoot.createElement('div');
+          const $html = wrapHTML(`<my-elem></my-elem>`);
+
+          $div.appendChild($html);
+
+          const [myElem] = $div.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.be.equal('<my-elem></my-elem>');
+        });
+      });
+
+      describe('with scoped registry', () => {
+        it('should scope non upgraded custom elements', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $div = shadowRoot.createElement('div');
+          const $html = wrapHTML(`<my-elem></my-elem>`);
+
+          $div.appendChild($html);
+
+          const [myElem] = $div.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.match(
+            new RegExp(`<my-elem-\\d{1,5}></my-elem-\\d{1,5}>`)
+          );
+        });
+
+        it('should not scope upgraded custom elements', async () => {
+          const { tagName, Element } = getTestElement();
+          customElements.define(tagName, Element);
+
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $div = shadowRoot.createElement('div');
+          const $html = wrapHTML(`<${tagName}></${tagName}>`);
+
+          $div.appendChild($html);
+
+          const [myElem] = $div.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.be.equal(`<${tagName}></${tagName}>`);
+        });
+      });
+    });
+  });
+
+  describe('insertBefore', () => {
+    describe('document scoped', () => {
+      it('should not scope custom elements', async () => {
+        const $div = wrapHTML('<!-- comment -->');
+        const $html = wrapHTML(`<my-elem></my-elem>`);
+
+        $div.insertBefore($html, $div.firstElementChild);
+
+        const [myElem] = $div.firstElementChild.children;
+
+        expect(myElem.outerHTML).to.be.equal('<my-elem></my-elem>');
+      });
+    });
+
+    describe('shadowRoot scoped', () => {
+      describe('with global registry', () => {
+        it('should not scope custom elements', async () => {
+          const $html = wrapHTML(`<my-elem></my-elem>`);
+          const shadowRoot = getScopedShadowRoot();
+          const $div = shadowRoot.createElement('div');
+          $div.innerHTML = '<!-- comment -->';
+
+          $div.insertBefore($html, $div.firstElementChild);
+
+          const [myElem] = $div.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.be.equal('<my-elem></my-elem>');
+        });
+      });
+
+      describe('with scoped registry', () => {
+        it('should scope non upgraded custom elements', async () => {
+          const $html = wrapHTML(`<my-elem></my-elem>`);
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $div = shadowRoot.createElement('div');
+          $div.innerHTML = '<!-- comment -->';
+
+          $div.insertBefore($html, $div.firstElementChild);
+
+          const [myElem] = $div.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.match(
+            new RegExp(`<my-elem-\\d{1,5}></my-elem-\\d{1,5}>`)
+          );
+        });
+
+        it('should not scope upgraded custom elements', async () => {
+          const { tagName, Element } = getTestElement();
+          customElements.define(tagName, Element);
+
+          const $html = wrapHTML(`<${tagName}></${tagName}>`);
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $div = shadowRoot.createElement('div');
+          $div.innerHTML = '<!-- comment -->';
+
+          $div.insertBefore($html, $div.firstElementChild);
+
+          const [myElem] = $div.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.be.equal(`<${tagName}></${tagName}>`);
+        });
+      });
     });
   });
 });

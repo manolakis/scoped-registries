@@ -14,6 +14,11 @@ describe('html', () => {
       output: 'Sample text',
     },
     {
+      input: 'Sample <!--<mandalore-planet>Text</mandalore-planet>-->',
+      output:
+        'Sample <!--<mandalore-planet-\\d{1,5}>Text</mandalore-planet-\\d{1,5}>-->',
+    },
+    {
       input: 'Sample <mandalore-planet>Text</mandalore-planet>',
       output:
         'Sample <mandalore-planet-\\d{1,5}>Text</mandalore-planet-\\d{1,5}>',
