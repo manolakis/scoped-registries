@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^9",
-    "@open-wc/eslint-config": "^2",
+    "@open-wc/eslint-config": "^3",
     "@open-wc/testing": "^2",
     "@web/test-runner": "^0.7.3",
     "@web/test-runner-playwright": "^0.5.1",
