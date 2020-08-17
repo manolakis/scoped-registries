@@ -7,8 +7,9 @@ import {
   createTemplateElement,
   wrapHTML,
 } from './utils.js';
+import { supportsAdoptingStyleSheets } from '../src/constants.js'; // loads the polyfill
 
-import '../index.js'; // loads the polyfill
+import '../index.js';
 
 describe('polyfillShadowRoot', () => {
   describe('DOM', () => {
@@ -410,6 +411,101 @@ describe('polyfillShadowRoot', () => {
         });
       });
     });
+
+    describe('appendChild', () => {
+      describe('with global registry', () => {
+        it('should not scope custom elements', async () => {
+          const shadowRoot = getScopedShadowRoot();
+          const $html = wrapHTML(`<my-elem></my-elem>`);
+
+          shadowRoot.appendChild($html);
+
+          const [myElem] = shadowRoot.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.be.equal('<my-elem></my-elem>');
+        });
+      });
+
+      describe('with scoped registry', () => {
+        it('should scope non upgraded custom elements', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $html = wrapHTML(`<my-elem></my-elem>`);
+
+          shadowRoot.appendChild($html);
+
+          const [myElem] = shadowRoot.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.match(
+            new RegExp(`<my-elem-\\d{1,5}></my-elem-\\d{1,5}>`)
+          );
+        });
+
+        it('should not scope upgraded custom elements', async () => {
+          const { tagName, Element } = getTestElement();
+          customElements.define(tagName, Element);
+
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const $html = wrapHTML(`<${tagName}></${tagName}>`);
+
+          shadowRoot.appendChild($html);
+
+          const [myElem] = shadowRoot.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.be.equal(`<${tagName}></${tagName}>`);
+        });
+      });
+    });
+
+    describe('insertBefore', () => {
+      describe('with global registry', () => {
+        it('should not scope custom elements', async () => {
+          const $html = wrapHTML(`<my-elem></my-elem>`);
+          const shadowRoot = getScopedShadowRoot();
+          shadowRoot.innerHTML = '<!-- comment -->';
+
+          shadowRoot.insertBefore($html, shadowRoot.firstElementChild);
+
+          const [myElem] = shadowRoot.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.be.equal('<my-elem></my-elem>');
+        });
+      });
+
+      describe('with scoped registry', () => {
+        it('should scope non upgraded custom elements', async () => {
+          const $html = wrapHTML(`<my-elem></my-elem>`);
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          shadowRoot.innerHTML = '<!-- comment -->';
+
+          shadowRoot.insertBefore($html, shadowRoot.firstElementChild);
+
+          const [myElem] = shadowRoot.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.match(
+            new RegExp(`<my-elem-\\d{1,5}></my-elem-\\d{1,5}>`)
+          );
+        });
+
+        it('should not scope upgraded custom elements', async () => {
+          const { tagName, Element } = getTestElement();
+          customElements.define(tagName, Element);
+
+          const $html = wrapHTML(`<${tagName}></${tagName}>`);
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          shadowRoot.innerHTML = '<!-- comment -->';
+
+          shadowRoot.insertBefore($html, shadowRoot.firstElementChild);
+
+          const [myElem] = shadowRoot.firstElementChild.children;
+
+          expect(myElem.outerHTML).to.be.equal(`<${tagName}></${tagName}>`);
+        });
+      });
+    });
   });
 
   describe('styles', () => {
@@ -508,5 +604,22 @@ describe('polyfillShadowRoot', () => {
         );
       });
     });
+
+    if (supportsAdoptingStyleSheets) {
+      describe('CSSStyleSheet', () => {
+        it('should scope the adopted style sheets', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const styleSheet = new CSSStyleSheet();
+          styleSheet.replaceSync('my-tag { color: red; }');
+
+          shadowRoot.adoptedStyleSheets = [styleSheet];
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.match(
+            new RegExp(`my-tag-\\d{1,5} { color: red; }`)
+          );
+        });
+      });
+    }
   });
 });

@@ -2,33 +2,12 @@
 import { definitionsRegistry } from './definitionsRegistry.js';
 import { htmlTransform } from './htmlTransform.js';
 import { cssTransform } from './cssTransform.js';
-
-const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
-  ShadowRoot.prototype,
-  'innerHTML'
-);
+import { supportsAdoptingStyleSheets } from './constants.js';
 
 const setScope = (node, scope) => {
   node.childNodes.forEach(child => setScope(child, scope));
-  node.scope = scope;
+  node.__scope = scope;
 };
-
-Object.defineProperty(ShadowRoot.prototype, 'innerHTML', {
-  ...originalInnerHTMLDescriptor,
-  // eslint-disable-next-line object-shorthand,func-names
-  set: function (value) {
-    const registry = this.customElements || window.customElements;
-
-    const $data = originalInnerHTMLDescriptor.set.call(
-      this,
-      htmlTransform(value, registry)
-    );
-
-    this.childNodes.forEach(child => setScope(child, this));
-
-    return $data;
-  },
-});
 
 /**
  * Checks if is a custom element tag name.
@@ -54,6 +33,67 @@ const isUpgraded = node =>
   Object.getPrototypeOf(node).constructor !== HTMLElement;
 
 /**
+ * Original `innerHTML` descriptor.
+ * @type {PropertyDescriptor}
+ */
+const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
+  ShadowRoot.prototype,
+  'innerHTML'
+);
+
+/**
+ * Overrides the innerHTML descriptor by the polyfilled one.
+ */
+Object.defineProperty(ShadowRoot.prototype, 'innerHTML', {
+  ...originalInnerHTMLDescriptor,
+  // eslint-disable-next-line object-shorthand,func-names
+  set: function (value) {
+    const registry = this.customElements || window.customElements;
+
+    const $data = originalInnerHTMLDescriptor.set.call(
+      this,
+      htmlTransform(value, registry)
+    );
+
+    this.childNodes.forEach(child => setScope(child, this));
+
+    return $data;
+  },
+});
+
+if (supportsAdoptingStyleSheets) {
+  const originalAdoptedStyleSheetsDescriptor = Object.getOwnPropertyDescriptor(
+    ShadowRoot.prototype,
+    'adoptedStyleSheets'
+  );
+
+  Object.defineProperty(ShadowRoot.prototype, 'adoptedStyleSheets', {
+    ...originalAdoptedStyleSheetsDescriptor,
+    // eslint-disable-next-line object-shorthand,func-names
+    set: function (styleSheets) {
+      const registry = this.customElements || window.customElements;
+
+      return originalAdoptedStyleSheetsDescriptor.set.call(
+        this,
+        styleSheets.map(styleSheet => {
+          const scopedStyleSheet = new CSSStyleSheet();
+
+          for (const rule of styleSheet.cssRules) {
+            scopedStyleSheet.insertRule(
+              `${cssTransform(rule.selectorText, registry)} { ${
+                rule.style.cssText
+              } }`
+            );
+          }
+
+          return scopedStyleSheet;
+        })
+      );
+    },
+  });
+}
+
+/**
  * Enhances a ShadowRoot to allow scoped elements.
  * @param {ShadowRoot} shadowRoot
  * @param {CustomElementRegistry} registry
@@ -67,6 +107,8 @@ export const polyfillShadowRoot = (
   shadowRoot.customElements = registry;
   shadowRoot.__querySelector = shadowRoot.querySelector;
   shadowRoot.__querySelectorAll = shadowRoot.querySelectorAll;
+  shadowRoot.__appendChild = shadowRoot.appendChild;
+  shadowRoot.__insertBefore = shadowRoot.insertBefore;
 
   /**
    * Creates an element using the CustomElementRegistry of the ShadowRoot.
@@ -77,7 +119,7 @@ export const polyfillShadowRoot = (
     if (!isCustomElement(tagName)) {
       const $el = document.createElement(tagName, options);
 
-      $el.scope = shadowRoot;
+      $el.__scope = shadowRoot;
 
       return $el;
     }
@@ -89,7 +131,7 @@ export const polyfillShadowRoot = (
     );
 
     if (!scope.__isRoot()) {
-      element.scope = scope;
+      element.__scope = scope;
     }
 
     return element;
@@ -118,7 +160,7 @@ export const polyfillShadowRoot = (
     );
 
     if (!scope.__isRoot()) {
-      element.scope = scope;
+      element.__scope = scope;
     }
 
     return element;
@@ -230,6 +272,26 @@ export const polyfillShadowRoot = (
    */
   shadowRoot.querySelectorAll = function querySelectorAll(query) {
     return this.__querySelectorAll(cssTransform(query, this.customElements));
+  };
+
+  shadowRoot.appendChild = function appendChild(child) {
+    const transformedNode = this.__transformCustomElements(child);
+
+    if (child.parentNode) {
+      child.parentNode.removeChild(child);
+    }
+
+    return this.__appendChild(transformedNode);
+  };
+
+  shadowRoot.insertBefore = function insertBefore(newNode, referenceNode) {
+    const transformedNode = this.__transformCustomElements(newNode);
+
+    if (newNode.parentNode) {
+      newNode.parentNode.removeChild(newNode);
+    }
+
+    return this.__insertBefore(transformedNode, referenceNode);
   };
 
   return shadowRoot;

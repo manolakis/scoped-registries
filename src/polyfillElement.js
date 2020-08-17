@@ -1,3 +1,4 @@
+/* eslint object-shorthand:0, func-names:0 */
 import { definitionsRegistry } from './definitionsRegistry.js';
 import { polyfillShadowRoot } from './polyfillShadowRoot.js';
 import { htmlTransform } from './htmlTransform.js';
@@ -38,12 +39,11 @@ const originalInnerHTMLDescriptor = Object.getOwnPropertyDescriptor(
 const setScope = (node, scope) => {
   node.childNodes.forEach(child => setScope(child, scope));
   // eslint-disable-next-line no-param-reassign
-  node.scope = scope;
+  node.__scope = scope;
 };
 
 Object.defineProperty(Element.prototype, 'innerHTML', {
   ...originalInnerHTMLDescriptor,
-  // eslint-disable-next-line object-shorthand,func-names
   set: function (value) {
     const scope = getScope(this);
     const registry = getRegistry(scope);
@@ -68,13 +68,21 @@ const originalTagNameDescriptor = Object.getOwnPropertyDescriptor(
 
 Object.defineProperty(Element.prototype, 'tagName', {
   ...originalTagNameDescriptor,
-  // eslint-disable-next-line object-shorthand,func-names
   get: function () {
     const $tagName = originalTagNameDescriptor.get.call(this);
     const { originalTagName = $tagName } =
       definitionsRegistry.findByTagName($tagName.toLowerCase()) || {};
 
     return originalTagName.toUpperCase();
+  },
+});
+
+Object.defineProperty(Element.prototype, 'scope', {
+  get: function () {
+    return this.__scope || document;
+  },
+  set: function () {
+    throw new Error("'scope' is a readonly property");
   },
 });
 
@@ -87,6 +95,8 @@ export const polyfillElement = () => {
   that.__querySelectorAll = that.querySelectorAll;
   that.__getElementsByTagName = that.getElementsByTagName;
   that.__getElementsByTagNameNS = that.getElementsByTagNameNS;
+  that.__appendChild = that.appendChild;
+  that.__insertBefore = that.insertBefore;
 
   /**
    * Creates a shadow root for element and returns it.
@@ -177,5 +187,58 @@ export const polyfillElement = () => {
             .reduce((acc, items) => acc.concat(...items), [])
         );
     }
+  };
+
+  /**
+   * Adds a node to the end of the list of children of a specified parent node. If the given child is a reference to
+   * an existing node in the document, appendChild() moves it from its current position to the new position (there
+   * is no requirement to remove the node from its parent node before appending it to some other node).
+   *
+   * Returns the appended child (aChild), except when aChild is a DocumentFragment, in which case the empty
+   * DocumentFragment is returned.
+   *
+   * @param {Node} child
+   * @return {Node}
+   */
+  that.appendChild = function appendChild(child) {
+    if (this.scope === document) {
+      return this.__appendChild(child);
+    }
+
+    const transformedNode = this.scope.__transformCustomElements(child);
+
+    if (child.parentNode) {
+      child.parentNode.removeChild(child);
+    }
+
+    return this.__appendChild(transformedNode);
+  };
+
+  /**
+   * Inserts a node before a reference node as a child of a specified parent node.
+   *
+   * If the given node already exists in the document, insertBefore() moves it from its current position to the new
+   * position. (That is, it will automatically be removed from its existing parent before appending it to the
+   * specified new parent.)
+   *
+   * Returns the added child (unless newNode is a DocumentFragment, in which case the empty DocumentFragment is
+   * returned).
+   *
+   * @param {Node} newNode
+   * @param {Node} referenceNode
+   * @return {Node}
+   */
+  that.insertBefore = function insertBefore(newNode, referenceNode) {
+    if (this.scope === document) {
+      return this.__insertBefore(newNode, referenceNode);
+    }
+
+    const transformedNode = this.scope.__transformCustomElements(newNode);
+
+    if (newNode.parentNode) {
+      newNode.parentNode.removeChild(newNode);
+    }
+
+    return this.__insertBefore(transformedNode, referenceNode);
   };
 };
