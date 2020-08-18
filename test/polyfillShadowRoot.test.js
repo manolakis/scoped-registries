@@ -717,6 +717,23 @@ describe('polyfillShadowRoot', () => {
             'p { color: red; }'
           );
         });
+
+        it('should cache the styleSheets by shadowRoot to improve performance', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot1 = getScopedShadowRoot(registry);
+          const shadowRoot2 = getScopedShadowRoot(registry);
+          const styleSheet = new CSSStyleSheet();
+          styleSheet.replaceSync('my-tag { color: red; }');
+
+          shadowRoot1.adoptedStyleSheets = [styleSheet];
+          shadowRoot2.adoptedStyleSheets = [styleSheet];
+
+          const [styleSheet1] = shadowRoot1.adoptedStyleSheets;
+          const [styleSheet2] = shadowRoot2.adoptedStyleSheets;
+
+          expect(styleSheet1).to.be.equal(styleSheet2);
+          expect(registry.styleSheets.get(styleSheet)).to.be.equal(styleSheet1);
+        });
       });
     }
   });
