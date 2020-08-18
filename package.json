@@ -1,6 +1,6 @@
 {
   "name": "scoped-registries",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Scoped Custom Element Registries Polyfill",
   "author": "Manuel Martin",
   "license": "MIT",
