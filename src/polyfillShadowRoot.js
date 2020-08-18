@@ -82,9 +82,46 @@ if (supportsAdoptingStyleSheets) {
             scopedStyleSheet.insertRule(
               `${cssTransform(rule.selectorText, registry)} { ${
                 rule.style.cssText
-              } }`
+              } }`,
+              scopedStyleSheet.cssRules.length
             );
           }
+
+          styleSheet.subscribe(({ name, args }) => {
+            switch (name) {
+              case 'replaceSync':
+              case 'replace':
+                {
+                  const [html] = args;
+                  scopedStyleSheet.replaceSync(cssTransform(html, registry));
+                }
+                break;
+              case 'addRule':
+                {
+                  const [selector, block, index] = args;
+                  scopedStyleSheet.addRule(
+                    cssTransform(selector, registry),
+                    block,
+                    index
+                  );
+                }
+                break;
+              case 'removeRule':
+              case 'deleteRule':
+                scopedStyleSheet.removeRule(...args);
+                break;
+              case 'insertRule':
+                {
+                  const [rule, index] = args;
+                  scopedStyleSheet.insertRule(
+                    cssTransform(rule, registry),
+                    index
+                  );
+                }
+                break;
+              default:
+            }
+          });
 
           return scopedStyleSheet;
         })

@@ -619,6 +619,104 @@ describe('polyfillShadowRoot', () => {
             new RegExp(`my-tag-\\d{1,5} { color: red; }`)
           );
         });
+
+        it('should update the scoped styles when the CSSStyleSheet is updated through `replace`', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const styleSheet = new CSSStyleSheet();
+          styleSheet.replaceSync('my-tag { color: red; }');
+
+          shadowRoot.adoptedStyleSheets = [styleSheet];
+
+          await styleSheet.replace('my-tag { color: blue; }');
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.match(
+            new RegExp(`my-tag-\\d{1,5} { color: blue; }`)
+          );
+        });
+
+        it('should update the scoped styles when the CSSStyleSheet is updated through `replaceSync`', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const styleSheet = new CSSStyleSheet();
+          styleSheet.replaceSync('my-tag { color: red; }');
+
+          shadowRoot.adoptedStyleSheets = [styleSheet];
+
+          await styleSheet.replaceSync('my-tag { color: blue; }');
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.match(
+            new RegExp(`my-tag-\\d{1,5} { color: blue; }`)
+          );
+        });
+
+        it('should update the scoped styles when the CSSStyleSheet is updated through `addRule`', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const styleSheet = new CSSStyleSheet();
+          styleSheet.replaceSync('p { color: red; }');
+
+          shadowRoot.adoptedStyleSheets = [styleSheet];
+
+          await styleSheet.addRule('my-tag', 'color: blue', 0);
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.match(
+            new RegExp(`my-tag-\\d{1,5} { color: blue; }`)
+          );
+        });
+
+        it('should update the scoped styles when the CSSStyleSheet is updated through `removeRule`', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const styleSheet = new CSSStyleSheet();
+          styleSheet.replaceSync('my-tag { color: red; } p { color: red; }');
+
+          shadowRoot.adoptedStyleSheets = [styleSheet];
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.match(
+            new RegExp(`my-tag-\\d{1,5} { color: red; }`)
+          );
+
+          await styleSheet.removeRule(0);
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.equal(
+            'p { color: red; }'
+          );
+        });
+
+        it('should update the scoped styles when the CSSStyleSheet is updated through `insertRule`', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const styleSheet = new CSSStyleSheet();
+          styleSheet.replaceSync('p { color: red; }');
+
+          shadowRoot.adoptedStyleSheets = [styleSheet];
+
+          await styleSheet.insertRule('my-tag { color: blue; }', 0);
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.match(
+            new RegExp(`my-tag-\\d{1,5} { color: blue; }`)
+          );
+        });
+
+        it('should update the scoped styles when the CSSStyleSheet is updated through `deleteRule`', async () => {
+          const registry = new CustomElementRegistry();
+          const shadowRoot = getScopedShadowRoot(registry);
+          const styleSheet = new CSSStyleSheet();
+          styleSheet.replaceSync('my-tag { color: red; } p { color: red; }');
+
+          shadowRoot.adoptedStyleSheets = [styleSheet];
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.match(
+            new RegExp(`my-tag-\\d{1,5} { color: red; }`)
+          );
+
+          await styleSheet.deleteRule(0);
+
+          expect(shadowRoot.adoptedStyleSheets[0].cssRules[0].cssText).to.equal(
+            'p { color: red; }'
+          );
+        });
       });
     }
   });
