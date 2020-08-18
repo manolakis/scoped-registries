@@ -1,7 +1,7 @@
 {
-  "name": "scoped-custom-element-registry-polyfill",
+  "name": "scoped-registries",
   "version": "0.0.0",
-  "description": "Scoped CustomElement Registry Polyfill",
+  "description": "Scoped Custom Element Registries Polyfill",
   "author": "Manuel Martin",
   "license": "MIT",
   "main": "index.js",

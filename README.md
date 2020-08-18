@@ -1,9 +1,11 @@
-# Scoped Custom Element Registry Polyfill
+# Scoped Custom Element Registries Polyfill
+
+This is a polyfill for allowing Scoped Custom Element Registries. It has been tested in Chrome, Safari and WebKit. This polyfill works scoping the custom element tag names.
 
 ## Reference Documentation
 
 - [w3c / webcomponents](https://github.com/w3c/webcomponents/issues/716)
-- [Justin Fagnani](https://github.com/w3c/webcomponents/pull/865/files/d724c39b6f0eb34e9c74eb6b94e1ede92ab212aa)
+- [Justin Fagnani explanation](https://github.com/w3c/webcomponents/pull/865/files/d724c39b6f0eb34e9c74eb6b94e1ede92ab212aa)
 - [Scoped Elements - Proposal to align the API with CustomElementsRegistry](https://github.com/open-wc/open-wc/issues/1373)
 
 ## TODO
@@ -38,3 +40,9 @@
   - [X] `getElementsByTagNameNS()`: Must transform the tag name to search by the scoped one.
 
 - [X] Limit custom elements constructors by default to only looking up registrations from the global registry.
+
+## Limitations
+
+There are some limitations on the use of this polyfill.
+
+- Importing a Node tree with an upgraded custom-element and styles into a shadowRoot: The custom element is going to maintain the upgraded instance, but styles are going to be scoped, so it could cause a visual problem in the case styles are using the custom element tag name.
