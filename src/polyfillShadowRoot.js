@@ -73,9 +73,19 @@ if (supportsAdoptingStyleSheets) {
     set: function (styleSheets) {
       const registry = this.customElements || window.customElements;
 
+      if (registry === window.customElements) {
+        return originalAdoptedStyleSheetsDescriptor.set.call(this, styleSheets);
+      }
+
+      registry.styleSheets = registry.styleSheets || new WeakMap();
+
       return originalAdoptedStyleSheetsDescriptor.set.call(
         this,
         styleSheets.map(styleSheet => {
+          if (registry.styleSheets.has(styleSheet)) {
+            return registry.styleSheets.get(styleSheet);
+          }
+
           const scopedStyleSheet = new CSSStyleSheet();
 
           for (const rule of styleSheet.cssRules) {
@@ -122,6 +132,8 @@ if (supportsAdoptingStyleSheets) {
               default:
             }
           });
+
+          registry.styleSheets.set(styleSheet, scopedStyleSheet);
 
           return scopedStyleSheet;
         })

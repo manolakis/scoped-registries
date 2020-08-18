@@ -15,7 +15,7 @@
   - [X] `CustomElementRegistry.prototype.getRegistry(name: string)`: Returns the closest registry in which a tag name is defined.
   - [X] `define()` returns a new class. The constructor returned by `define()` is from a trivial subclass of the registered class.
 
-- [ ] `ShadowRoot`
+- [X] `ShadowRoot`
   - [X] `customElements: CustomElementRegistry`: The `CustomElementRegistry` the `ShadowRoot` uses, set on `attachShadowRoot()`.
   - [X] `createElement()`: create new elements using the `CustomElementRegistry` of the `ShadowRoot`.
   - [X] `createElementNS()`: create new elements using the `CustomElementRegistry` of the `ShadowRoot`.
@@ -23,9 +23,9 @@
   - [X] `innerHTML`
   - [X] `querySelector()`: Must transform the tag selector to search by the scoped ones.
   - [X] `querySelectorAll()`: Must transform the tag selector to search by the scoped ones.
-  - [ ] Styles
+  - [X] Styles
     - [X] Styles inside the `style` tag name
-    - [ ] Styles using `CSSStyleSheet`
+    - [X] Styles using `CSSStyleSheet`
 
 - [X] `Element`
   - [X] `Element.prototype.scope: Document | ShadowRoot`: Elements have DOM creation APIs, like `innerHTML`, so they need a reference to their scope. Elements expose this with a scope property. One difference between this and `getRootNode()` is that the scope for an element can never change.
