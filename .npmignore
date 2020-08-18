@@ -1,0 +1,37 @@
+## editors
+/.idea
+
+## system files
+.DS_Store
+
+## code coverage folders
+coverage/
+
+## github
+.github/
+
+## npm
+node_modules/
+npm-debug.log
+yarn-error.log
+
+## temp folders
+/.tmp/
+
+## we prefer yarn.lock
+package-lock.json
+
+# #test files
+/test
+
+## demo files
+/demo
+
+## dev config files
+.editorconfig
+.eslintignore
+.eslintrc.js
+.markdownlint.json
+.nvmrc
+.prettierignore
+commitlint.config.js
