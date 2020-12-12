@@ -22,7 +22,9 @@
   // eslint-disable-next-line max-classes-per-file
   import { Foo } from './Foo.js';
   import { Bar } from './Bar.js';
-
+  import {LitElement} from '../lit-element.js';
+  import {html} from '../lit-html.js';
+  console.log(LitElement)
   const registry1 = new CustomElementRegistry();
   const registry2 = new CustomElementRegistry();
 
@@ -30,24 +32,15 @@
   registry2.define('my-el', Bar);
 
   const createElement = registry =>
-    class extends HTMLElement {
-      constructor() {
-        super();
+    class extends LitElement {
 
-        this.attachShadow({ mode: 'open', customElements: registry });
+      createShadowRoot() {
+        return this.attachShadow({ mode: 'open', customElements: registry });
       }
 
-      connectedCallback() {
-        // Use the scoped element creation APIs to create elements:
-        const $template = document.querySelector('template');
-        const $clone = this.shadowRoot.importNode($template.content, true);
 
-        this.shadowRoot.appendChild($clone);
-
-        const css = new CSSStyleSheet();
-        css.replaceSync('my-el { margin: 10px; }');
-
-        this.shadowRoot.adoptedStyleSheets = [css];
+      render() {
+        return html`<my-el></my-el>`
       }
     }
 
@@ -55,6 +48,7 @@
   customElements.define('my-element2', createElement(registry2));
 </script>
 
-
+<my-element1></my-element1>
+<my-element2></my-element2>
 </body>
 </html>
