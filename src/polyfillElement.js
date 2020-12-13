@@ -5,6 +5,12 @@ import { htmlTransform } from './htmlTransform.js';
 import { cssTransform } from './cssTransform.js';
 import { HTMLCollection } from './HTMLCollection.js';
 
+const policy =
+  window.trustedTypes &&
+  window.trustedTypes.createPolicy('scoped-registry-polifyll', {
+    createHTML: s => s,
+  });
+
 const getScope = element => {
   const rootNode = element.getRootNode();
 
@@ -48,10 +54,12 @@ Object.defineProperty(Element.prototype, 'innerHTML', {
     const scope = getScope(this);
     const registry = getRegistry(scope);
 
-    const $data = originalInnerHTMLDescriptor.set.call(
-      this,
-      htmlTransform(value, registry)
-    );
+    const transformedHTML =
+      policy === undefined
+        ? htmlTransform(value, registry)
+        : policy.createHTML(htmlTransform(value.toString(), registry));
+
+    const $data = originalInnerHTMLDescriptor.set.call(this, transformedHTML);
 
     if (scope !== document) {
       this.childNodes.forEach(child => setScope(child, scope));
