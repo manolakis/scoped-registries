@@ -287,9 +287,15 @@ export const polyfillShadowRoot = (
     });
 
     $div.innerHTML = node.outerHTML;
-    children.forEach(child => $div.firstElementChild.appendChild(child));
+    const transformedNode = $div.firstElementChild;
 
-    return $div.firstElementChild;
+    Object.getOwnPropertyNames(node).forEach(property => {
+      transformedNode[property] = node[property];
+    });
+
+    children.forEach(child => transformedNode.appendChild(child));
+
+    return transformedNode;
   };
 
   /**
