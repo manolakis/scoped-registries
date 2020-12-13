@@ -12,7 +12,10 @@
     my-el {
       color: red;
     }
-    span { color: blue; }
+
+    span {
+      color: blue;
+    }
   </style>
   <my-el></my-el>
   <span>sample</span>
@@ -22,9 +25,9 @@
   // eslint-disable-next-line max-classes-per-file
   import { Foo } from './Foo.js';
   import { Bar } from './Bar.js';
-  import {LitElement} from '../lit-element.js';
-  import {html} from '../lit-html.js';
-  console.log(LitElement)
+  import { LitElement } from '../lit-element.js';
+  import { html } from '../lit-html.js';
+
   const registry1 = new CustomElementRegistry();
   const registry2 = new CustomElementRegistry();
 
@@ -34,15 +37,15 @@
   const createElement = registry =>
     class extends LitElement {
 
-      createShadowRoot() {
+      createRenderRoot() {
         return this.attachShadow({ mode: 'open', customElements: registry });
       }
 
-
       render() {
-        return html`<my-el></my-el>`
+        return html`
+          <my-el></my-el>`;
       }
-    }
+    };
 
   customElements.define('my-element1', createElement(registry1));
   customElements.define('my-element2', createElement(registry2));
